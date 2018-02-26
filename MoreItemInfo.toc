@@ -1,6 +1,6 @@
 ## Interface: 70300
 ## Title: MoreItemInfo
-## Notes: Add informations about item in tooltip (RPPM, ...)
+## Notes: Adds informations about the item in tooltip (RPPM, ...)
 ## Author: Kutikuti
 ## Version: 0.1
 
