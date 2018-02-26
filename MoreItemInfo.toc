@@ -1,0 +1,9 @@
+## Interface: 70300
+## Title: MoreItemInfo
+## Notes: Add informations about item in tooltip (RPPM, ...)
+## Author: Kutikuti
+## Version: 0.1
+
+Core.lua
+Enum\RPPM.lua
+Enum\Hotfixes\RPPM.lua
