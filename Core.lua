@@ -3,7 +3,6 @@ local addonName, MII = ...;
 MoreItemInfo = MII
 
 MoreItemInfo.Enum = {}
-MoreItemInfo.Enum.Hotfixes = {}
 
 local function tooltipLine(tooltip, id, type)
   tooltip:AddDoubleLine(type, "|cffffffff" .. id)
@@ -19,46 +18,105 @@ local function getSpecID()
 	return globalSpecID
 end
 
+local function getRace()
+	-- Race info
+	local _, playerRace = UnitRace('player')
+  
+  return playerRace
+end
+
+local function getClassID()
+	-- Race info
+	local _, _, playerRace = UnitClass('player')
+  
+  return playerRace
+end
+
 local function getRPPM(itemID)
   local rppmtable = {}
-
-  if MoreItemInfo.Enum.RPPM[itemID] ~= nil then
-    if MoreItemInfo.Enum.Hotfixes.RPPM[itemID] ~= nil then
-      rppmtable = MoreItemInfo.Enum.Hotfixes.RPPM[itemID]
-    else
-      rppmtable = MoreItemInfo.Enum.RPPM[itemID]
-    end
+  if MoreItemInfo.Enum.itemRPPM[itemID] ~= nil then
+    rppmtable = MoreItemInfo.Enum.itemRPPM[itemID]
   else
     return nil
   end
   
   local specID = getSpecID()
-  if rppmtable[specID] ~= nil then
-    return rppmtable[specID]
-  else
-    return rppmtable[0]
+  local classID = getClassID()
+  local race = getRace()
+  
+  local baseRPPM = rppmtable[0]
+  
+  local modHaste = false
+  if rppmtable["HASTE"] ~= nil then
+    modHaste = true
   end
+  local modCrit = false
+  if rppmtable["CRIT"] ~= nil then
+    modCrit = true
+  end
+  
+  local modRace = nil
+  if rppmtable["RACE"] ~= nil then
+    if rppmtable["RACE"][race] ~= nil then
+      modRace = rppmtable["RACE"][race]
+    end
+  end
+  
+  local modClass = nil
+  if rppmtable["CLASS"] ~= nil then
+    if rppmtable["CLASS"][classID] ~= nil then
+      modClass = rppmtable["CLASS"][classID]
+    end
+  end
+  
+  local modSpec = nil
+  if rppmtable["SPEC"] ~= nil then
+    if rppmtable["SPEC"][specID] ~= nil then
+      modSpec = rppmtable["SPEC"][bspecID]
+    end
+  end
+    
+  local rppmString = ""
+  
+  if modRace ~= nil then
+    rppmString = modRace
+  elseif modClass~= nil then
+    rppmString = modClass
+  elseif modSpec~= nil then
+    rppmString = modSpec
+  else
+    rppmString = baseRPPM
+  end
+  if modHaste then
+    rppmString = rppmString .. " (Hasted)"
+  elseif modCrit then
+    rppmString = rppmString .. "(Crit)"
+  end
+  
+  return rppmString
 end
 
 local function itemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   local itemString = string.match(itemLink, "item:([%-?%d:]+)")
 	local itemSplit = {}
-
-	-- Split data into a table
-	for v in string.gmatch(itemString, "(%d*:?)") do
-		if v == ":" then
-		  itemSplit[#itemSplit + 1] = 0
-		else
-		  itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
-		end
-	end
-
-	local itemID = tonumber(itemSplit[1])
   
-  local rppm = getRPPM(itemID)
-  if rppm ~= nil then
-    tooltipLine(self, getRPPM(itemID), "RPPM")
+  if itemString then
+    -- Split data into a table
+    for v in string.gmatch(itemString, "(%d*:?)") do
+      if v == ":" then
+        itemSplit[#itemSplit + 1] = 0
+      else
+        itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+      end
+    end
+
+    local itemID = tonumber(itemSplit[1])
+    
+    local rppm = getRPPM(itemID)
+    if rppm ~= nil then
+      tooltipLine(self, getRPPM(itemID), "RPPM")
+    end
   end
 end
 
