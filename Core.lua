@@ -10,6 +10,35 @@ local function tooltipLine(tooltip, id, type)
   tooltip:Show()
 end
 
+local function getSpecID()
+	local globalSpecID
+	local specId = GetSpecialization()
+	if specId then
+		globalSpecID = GetSpecializationInfo(specId)
+	end
+	return globalSpecID
+end
+
+local function getRPPM(itemID)
+  local rppmtable = {}
+
+  if MoreItemInfo.Enum.RPPM[itemID] ~= nil then
+    if MoreItemInfo.Enum.Hotfixes.RPPM[itemID] ~= nil then
+      rppmtable = MoreItemInfo.Enum.Hotfixes.RPPM[itemID]
+    else
+      rppmtable = MoreItemInfo.Enum.RPPM[itemID]
+    end
+  else
+    return nil
+  end
+  
+  local specID = getSpecID()
+  if rppmtable[specID] ~= nil then
+    return rppmtable[specID]
+  else
+    return rppmtable[0]
+  end
+end
 
 local function itemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
@@ -27,14 +56,10 @@ local function itemTooltipOverride(self)
 
 	local itemID = tonumber(itemSplit[1])
   
-  if MoreItemInfo.Enum.RPPM[itemID] ~= nil then
-    if MoreItemInfo.Enum.Hotfixes.RPPM[itemID] ~= nil then
-      tooltipLine(self, MoreItemInfo.Enum.Hotfixes.RPPM[itemID], "RPPM")
-    else
-      tooltipLine(self, MoreItemInfo.Enum.RPPM[itemID], "RPPM")
-    end
+  local rppm = getRPPM(itemID)
+  if rppm ~= nil then
+    tooltipLine(self, getRPPM(itemID), "RPPM")
   end
-  
 end
 
 GameTooltip:HookScript("OnTooltipSetItem", itemTooltipOverride)
