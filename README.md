@@ -19,6 +19,8 @@ If there is hotfixes in game, you will just have to update the addon to get the 
   - RPPM
 - Item :
   - ID
+  - Spell ID
+  - RPPM
 - Artifact :
   - Artifact ID
   - Spell ID

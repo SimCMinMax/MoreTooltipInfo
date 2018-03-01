@@ -153,7 +153,11 @@ local function ItemTooltipOverride(self)
     if itemID then
       TooltipLine(self, itemID, "ItemID")
       
-      RPPMTooltip(self, GetItemSpellID(itemID))
+      local spellID = GetItemSpellID(itemID)
+      if spellID then
+        TooltipLine(self, spellID, "SpellID")
+        RPPMTooltip(self, GetItemSpellID(itemID))
+      end     
     end
   end
 end
