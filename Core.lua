@@ -158,7 +158,7 @@ end
 local function ArtifactTooltipOverride(self,powerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
   local spellID = powerInfo.spellID
-  if powerID then TooltipLine(self, powerID, "ArtifactPowerID") end
+  -- if powerID then TooltipLine(self, powerID, "ArtifactPowerID") end
   if spellID then 
     local rppm = GetRPPM(spellID)
     if rppm ~= nil then
@@ -167,11 +167,21 @@ local function ArtifactTooltipOverride(self,powerID)
   end
 end
 
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", ArtifactTooltipOverride)
-GameTooltip:HookScript("OnTooltipSetSpell", SpellTooltipOverride)
-GameTooltip:HookScript("OnTooltipSetItem", ItemTooltipOverride)
-ItemRefTooltip:HookScript("OnTooltipSetItem", ItemTooltipOverride)
-ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", ItemTooltipOverride)
-ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", ItemTooltipOverride)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", ItemTooltipOverride)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", ItemTooltipOverride)
+local function ManageTooltips(TooltipType,...)
+  if TooltipType == "artifact" then
+    ArtifactTooltipOverride(...)
+  elseif TooltipType =="spell" then
+    SpellTooltipOverride(...)
+  elseif TooltipType =="item" then
+    ItemTooltipOverride(...)
+  end
+end
+
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) ManageTooltips("artifact",...) end)
+GameTooltip:HookScript("OnTooltipSetSpell", function (...) ManageTooltips("spell",...) end)
+GameTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+ItemRefTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
