@@ -61,7 +61,7 @@ local function GetIDFromLink(linktype,Link)
 	return tonumber(xSplit[1])
 end
 
-local function GetSpellID(itemID)
+local function GetItemSpellID(itemID)
   if MoreItemInfo.Enum.ItemSpell[itemID] ~= nil then
     return MoreItemInfo.Enum.ItemSpell[itemID]
   else
@@ -153,7 +153,7 @@ local function ItemTooltipOverride(self)
     if itemID then
       TooltipLine(self, itemID, "ItemID")
       
-      RPPMTooltip(self, GetSpellID(itemID))
+      RPPMTooltip(self, GetItemSpellID(itemID))
     end
   end
 end
@@ -169,6 +169,9 @@ local function SpellTooltipOverride(option, self, ...)
     spellID = select(11, UnitBuff(...)) 
   elseif option == "debuff" then
     spellID = select(11, UnitDebuff(...))   
+  elseif option == "ref" then
+    spellID = GetIDFromLink("spell", self)
+    self = ItemRefTooltip
   end
   
   if spellID ~= nil then
@@ -182,9 +185,14 @@ end
 local function ArtifactTooltipOverride(self, artifactPowerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(artifactPowerID)
   local spellID = powerInfo.spellID
-  if artifactPowerID then TooltipLine(self, artifactPowerID, "ArtifactPowerID") end
+  
+  if artifactPowerID then 
+    TooltipLine(self, artifactPowerID, "ArtifactPowerID") 
+  end
+  
   if spellID then 
     TooltipLine(self, spellID, "SpellID")
+    
     RPPMTooltip(self, spellID)
   end
 end
