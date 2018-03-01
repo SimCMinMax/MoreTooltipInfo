@@ -2,7 +2,7 @@
 ## Title: MoreItemInfo
 ## Notes: Adds informations about the item in tooltip (RPPM, ...)
 ## Author: Kutikuti
-## Version: 0.1
+## Version: 0.2
 
 Core.lua
 Enum\RPPM.lua
