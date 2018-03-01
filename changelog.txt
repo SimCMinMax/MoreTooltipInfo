@@ -1,3 +1,9 @@
+v0.2 03/01/2018
+[UI] Added RPPM calculation (haste and crit)
+[UI] Added RPPM for spells (incl artifacts)
+[UI] Added IDs (item, spell, artifact)
+[Code] Refactor and cleanup for easier maintaining
+
 v0.1 02/26/2018
 [All] Creation
 
