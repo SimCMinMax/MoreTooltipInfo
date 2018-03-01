@@ -33,8 +33,12 @@ local function getClassID()
   return playerRace
 end
 
-local function getHaste()
-  return UnitSpellHaste('player')
+local function getHastePct()
+  return GetHaste()
+end
+
+local function getCritPct()
+  return GetCritChance()
 end
 
 local function getRPPM(itemID)
@@ -93,12 +97,13 @@ local function getRPPM(itemID)
     rppmString = baseRPPM
   end
   if modHaste then
-    local currentHasteRating = GetHaste()
-    local hastedRPPM = rppmString + rppmString * (currentHasteRating / 100)
-    
+    local currentHasteRating = getHastePct()
+    local hastedRPPM = rppmString * (1 + (currentHasteRating / 100))
     rppmString = rppmString .. " (Hasted : " .. string.format("%.4f", hastedRPPM) ..")"
   elseif modCrit then
-    rppmString = rppmString .. " (Crit)"
+    local currentCritRating = getCritPct()
+    local critRPPM = rppmString * (1 + (currentCritRating / 100))
+    rppmString = rppmString .. " (Crit : " .. string.format("%.4f", critRPPM) ..")"
   end
   
   return rppmString
