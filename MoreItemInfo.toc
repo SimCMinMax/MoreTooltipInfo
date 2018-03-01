@@ -6,3 +6,4 @@
 
 Core.lua
 Enum\RPPM.lua
+Enum\ItemSpell.lua
