@@ -4,12 +4,13 @@ MoreItemInfo = MII
 
 MoreItemInfo.Enum = {}
 
-local function tooltipLine(tooltip, id, type)
-  tooltip:AddDoubleLine(type, "|cffffffff" .. id)
+local function tooltipLine(tooltip, info, infoType)
+  tooltip:AddDoubleLine(infoType, "|cffffffff" .. info)
   tooltip:Show()
 end
 
 local function getSpecID()
+  -- Spec Info
 	local globalSpecID
 	local specId = GetSpecialization()
 	if specId then
@@ -26,10 +27,14 @@ local function getRace()
 end
 
 local function getClassID()
-	-- Race info
+	-- Class info
 	local _, _, playerRace = UnitClass('player')
   
   return playerRace
+end
+
+local function getHaste()
+  return UnitSpellHaste('player')
 end
 
 local function getRPPM(itemID)
@@ -88,7 +93,10 @@ local function getRPPM(itemID)
     rppmString = baseRPPM
   end
   if modHaste then
-    rppmString = rppmString .. " (Hasted)"
+    local currentHasteRating = GetHaste()
+    local hastedRPPM = rppmString + rppmString * (currentHasteRating / 100)
+    
+    rppmString = rppmString .. " (Hasted : " .. string.format("%.4f", hastedRPPM) ..")"
   elseif modCrit then
     rppmString = rppmString .. " (Crit)"
   end
