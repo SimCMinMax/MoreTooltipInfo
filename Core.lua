@@ -119,36 +119,56 @@ end
 
 local function ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
-  local itemString = string.match(itemLink, "item:([%-?%d:]+)")
-	local itemSplit = {}
-  
-  if itemString then
-    -- Split data into a table
-    for v in string.gmatch(itemString, "(%d*:?)") do
-      if v == ":" then
-        itemSplit[#itemSplit + 1] = 0
-      else
-        itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+  if itemLink then
+    local itemString = string.match(itemLink, "item:([%-?%d:]+)")
+    local itemSplit = {}
+    
+    if itemString then
+      -- Split data into a table
+      for v in string.gmatch(itemString, "(%d*:?)") do
+        if v == ":" then
+          itemSplit[#itemSplit + 1] = 0
+        else
+          itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+        end
       end
-    end
 
-    local itemID = tonumber(itemSplit[1])
-    local spellID = GetSpellID(itemID)
-    print(itemID,spellID)
-    if spellID ~= nil then
-      local rppm = GetRPPM(spellID)
-      if rppm ~= nil then
-        TooltipLine(self, rppm, "RPPM")
+      local itemID = tonumber(itemSplit[1])
+      local spellID = GetSpellID(itemID)
+      if spellID ~= nil then
+        local rppm = GetRPPM(spellID)
+        if rppm ~= nil then
+          TooltipLine(self, rppm, "RPPM")
+        end
       end
     end
   end
 end
 
-local function ManageTooltip (self)
-  
-  
+local function SpellTooltipOverride(self)
+  local spellID = select(3, self:GetSpell())
+  if spellID ~= nil then
+    local rppm = GetRPPM(spellID)
+    if rppm ~= nil then
+      TooltipLine(self, rppm, "RPPM")
+    end
+  end
 end
 
+local function ArtifactTooltipOverride(self,powerID)
+  local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
+  local spellID = powerInfo.spellID
+  if powerID then TooltipLine(self, powerID, "ArtifactPowerID") end
+  if spellID then 
+    local rppm = GetRPPM(spellID)
+    if rppm ~= nil then
+      TooltipLine(self, rppm, "RPPM")
+    end 
+  end
+end
+
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", ArtifactTooltipOverride)
+GameTooltip:HookScript("OnTooltipSetSpell", SpellTooltipOverride)
 GameTooltip:HookScript("OnTooltipSetItem", ItemTooltipOverride)
 ItemRefTooltip:HookScript("OnTooltipSetItem", ItemTooltipOverride)
 ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", ItemTooltipOverride)
