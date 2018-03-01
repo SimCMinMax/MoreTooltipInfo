@@ -41,6 +41,26 @@ local function GetCritPct()
   return GetCritChance()
 end
 
+local function GetIDFromLink(linktype,Link)
+	local xString = string.match(Link, linktype .. ":([%-?%d:]+)")
+	local xSplit = {}
+  
+  if not xString then
+    return nil
+  end
+
+	-- Split data into a table
+	for v in string.gmatch(xString, "(%d*:?)") do
+		if v == ":" then
+		  xSplit[#xSplit + 1] = 0
+		else
+		  xSplit[#xSplit + 1] = string.gsub(v, ':', '')
+		end
+	end
+
+	return tonumber(xSplit[1])
+end
+
 local function GetSpellID(itemID)
   if MoreItemInfo.Enum.ItemSpell[itemID] ~= nil then
     return MoreItemInfo.Enum.ItemSpell[itemID]
@@ -129,21 +149,8 @@ end
 local function ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   if itemLink then
-    local itemString = string.match(itemLink, "item:([%-?%d:]+)")
-    local itemSplit = {}
-    
-    if itemString then
-      -- Split data into a table
-      for v in string.gmatch(itemString, "(%d*:?)") do
-        if v == ":" then
-          itemSplit[#itemSplit + 1] = 0
-        else
-          itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
-        end
-      end
-
-      local itemID = tonumber(itemSplit[1])
-      
+    local itemID = GetIDFromLink("item",itemLink)
+    if itemID then
       TooltipLine(self, itemID, "ItemID")
       
       RPPMTooltip(self, GetSpellID(itemID))
@@ -183,7 +190,7 @@ local function ArtifactTooltipOverride(self, artifactPowerID)
 end
 
 local function ManageTooltips(tooltipType, option, ...)
-  print(tooltipType, option)
+  -- print(tooltipType, option)
   if tooltipType == "artifact" then
     ArtifactTooltipOverride(...)
   elseif tooltipType =="spell" then
