@@ -1,4 +1,4 @@
-MoreItemInfo.Enum.itemRPPM = {
+MoreItemInfo.Enum.RPPM = {
 	[871] = {
 		[0] = 2.0
 	},

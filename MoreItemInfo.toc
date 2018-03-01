@@ -5,4 +5,4 @@
 ## Version: 0.1
 
 Core.lua
-Enum\itemRPPM.lua
+Enum\RPPM.lua

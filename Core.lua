@@ -34,8 +34,8 @@ end
 
 local function getRPPM(itemID)
   local rppmtable = {}
-  if MoreItemInfo.Enum.itemRPPM[itemID] ~= nil then
-    rppmtable = MoreItemInfo.Enum.itemRPPM[itemID]
+  if MoreItemInfo.Enum.RPPM[itemID] ~= nil then
+    rppmtable = MoreItemInfo.Enum.RPPM[itemID]
   else
     return nil
   end
@@ -90,7 +90,7 @@ local function getRPPM(itemID)
   if modHaste then
     rppmString = rppmString .. " (Hasted)"
   elseif modCrit then
-    rppmString = rppmString .. "(Crit)"
+    rppmString = rppmString .. " (Crit)"
   end
   
   return rppmString
