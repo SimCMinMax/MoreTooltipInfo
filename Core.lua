@@ -5,7 +5,7 @@ MoreItemInfo = MII
 MoreItemInfo.Enum = {}
 
 local function TooltipLine(tooltip, info, infoType)
-  tooltip:AddDoubleLine(infoType, "|cffffffff" .. info)
+  tooltip:AddDoubleLine(infoType .. ":", "|cffffffff" .. info)
   tooltip:Show()
 end
 
@@ -117,6 +117,15 @@ local function GetRPPM(spellID)
   return rppmString
 end
 
+local function RPPMTooltip(destination, spellID)
+  if spellID ~= nil then
+    local rppm = GetRPPM(spellID)
+    if rppm ~= nil then
+      TooltipLine(destination, rppm, "RPPM")
+    end
+  end
+end
+
 local function ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   if itemLink then
@@ -134,54 +143,71 @@ local function ItemTooltipOverride(self)
       end
 
       local itemID = tonumber(itemSplit[1])
-      local spellID = GetSpellID(itemID)
-      if spellID ~= nil then
-        local rppm = GetRPPM(spellID)
-        if rppm ~= nil then
-          TooltipLine(self, rppm, "RPPM")
-        end
-      end
+      
+      TooltipLine(self, itemID, "ItemID")
+      
+      RPPMTooltip(self, GetSpellID(itemID))
     end
   end
 end
 
-local function SpellTooltipOverride(self)
-  local spellID = select(3, self:GetSpell())
+local function SpellTooltipOverride(option, self, ...)
+  local spellID
+  
+  if option == "default" then
+    spellID = select(3, self:GetSpell())
+  elseif option == "aura" then
+    spellID = select(11, UnitAura(...))
+  elseif option == "buff" then
+    spellID = select(11, UnitBuff(...)) 
+  elseif option == "debuff" then
+    spellID = select(11, UnitDebuff(...))   
+  end
+  
   if spellID ~= nil then
-    local rppm = GetRPPM(spellID)
-    if rppm ~= nil then
-      TooltipLine(self, rppm, "RPPM")
-    end
+    TooltipLine(self, spellID, "SpellID")
+    
+    RPPMTooltip(self, spellID)
   end
+
 end
 
-local function ArtifactTooltipOverride(self,powerID)
-  local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
+local function ArtifactTooltipOverride(self, artifactPowerID)
+  local powerInfo = C_ArtifactUI.GetPowerInfo(artifactPowerID)
   local spellID = powerInfo.spellID
-  -- if powerID then TooltipLine(self, powerID, "ArtifactPowerID") end
+  if artifactPowerID then TooltipLine(self, artifactPowerID, "ArtifactPowerID") end
   if spellID then 
-    local rppm = GetRPPM(spellID)
-    if rppm ~= nil then
-      TooltipLine(self, rppm, "RPPM")
-    end 
+    TooltipLine(self, spellID, "SpellID")
+    RPPMTooltip(self, spellID)
   end
 end
 
-local function ManageTooltips(TooltipType,...)
-  if TooltipType == "artifact" then
+local function ManageTooltips(tooltipType, option, ...)
+  print(tooltipType, option)
+  if tooltipType == "artifact" then
     ArtifactTooltipOverride(...)
-  elseif TooltipType =="spell" then
-    SpellTooltipOverride(...)
-  elseif TooltipType =="item" then
+  elseif tooltipType =="spell" then
+    SpellTooltipOverride(option, ...)
+  elseif tooltipType =="item" then
     ItemTooltipOverride(...)
   end
 end
 
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) ManageTooltips("artifact",...) end)
-GameTooltip:HookScript("OnTooltipSetSpell", function (...) ManageTooltips("spell",...) end)
-GameTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
-ItemRefTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
-ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
-ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item",...) end)
+-- Artifacts
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) ManageTooltips("artifact", nil, ...) end)
+
+-- Spells
+GameTooltip:HookScript("OnTooltipSetSpell", function (...) ManageTooltips("spell", "default", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) ManageTooltips("spell", "buff", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) ManageTooltips("spell", "debuff", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitAura", function (...) ManageTooltips("spell", "aura", ...) end)
+hooksecurefunc("SetItemRef", function (...) ManageTooltips("spell", "ref", ...) end)
+
+-- Items
+GameTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+ItemRefTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
+GameTooltip:HookScript("OnTooltipSetUnit", function(...) ManageTooltips("unit", nil, ...) end)
