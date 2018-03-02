@@ -4,6 +4,28 @@ MoreItemInfo = MII
 
 MoreItemInfo.Enum = {}
 
+local settingsLoaded = false
+local userSettings = {}
+
+local function MergeTables(defaultTable, settingsTable, destinationTable)
+	for k,v in pairs(defaultTable) do
+		if settingsTable[k] == nil then
+			destinationTable[k] = v
+		else
+			destinationTable[k] = settingsTable[k]
+		end
+	end
+	return destinationTable
+end
+
+local function HandleSettings()
+  if not settingsLoaded then
+    if not MoreItemInfoVars then MoreItemInfoVars = {} end
+    MergeTables(MoreItemInfo.Settings,MoreItemInfoVars,userSettings)
+    settingsLoaded = true
+  end
+end
+
 local function TooltipLine(tooltip, info, infoType)
   tooltip:AddDoubleLine(infoType .. ":", "|cffffffff" .. info)
   tooltip:Show()
@@ -151,12 +173,12 @@ local function ItemTooltipOverride(self)
   if itemLink then
     local itemID = GetIDFromLink("item",itemLink)
     if itemID then
-      TooltipLine(self, itemID, "ItemID")
+      if userSettings.Tooltip.Spell.ItemID then TooltipLine(self, itemID, "ItemID") end
       
       local spellID = GetItemSpellID(itemID)
       if spellID then
-        TooltipLine(self, spellID, "SpellID")
-        RPPMTooltip(self, GetItemSpellID(itemID))
+        if userSettings.Tooltip.Item.SpellID then TooltipLine(self, spellID, "SpellID") end
+        if userSettings.Tooltip.Item.RPPM then RPPMTooltip(self, GetItemSpellID(itemID)) end
       end     
     end
   end
@@ -179,9 +201,8 @@ local function SpellTooltipOverride(option, self, ...)
   end
   
   if spellID ~= nil then
-    TooltipLine(self, spellID, "SpellID")
-    
-    RPPMTooltip(self, spellID)
+    if userSettings.Tooltip.Spell.SpellID then TooltipLine(self, spellID, "SpellID") end
+    if userSettings.Tooltip.Spell.RPPM then RPPMTooltip(self, spellID) end
   end
 
 end
@@ -191,17 +212,18 @@ local function ArtifactTooltipOverride(self, artifactPowerID)
   local spellID = powerInfo.spellID
   
   if artifactPowerID then 
-    TooltipLine(self, artifactPowerID, "ArtifactPowerID") 
+    if userSettings.Tooltip.Artifact.ArtifactPowerID then TooltipLine(self, artifactPowerID, "ArtifactPowerID") end
   end
   
   if spellID then 
-    TooltipLine(self, spellID, "SpellID")
+    if userSettings.Tooltip.Artifact.SpellID then TooltipLine(self, spellID, "SpellID") end
     
-    RPPMTooltip(self, spellID)
+    if userSettings.Tooltip.Artifact.RPPM then RPPMTooltip(self, spellID) end
   end
 end
 
 local function ManageTooltips(tooltipType, option, ...)
+  -- HandleSettings()
   -- print(tooltipType, option)
   if tooltipType == "artifact" then
     ArtifactTooltipOverride(...)
@@ -211,6 +233,15 @@ local function ManageTooltips(tooltipType, option, ...)
     ItemTooltipOverride(...)
   end
 end
+
+-- Load Settings
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("ADDON_LOADED")
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+  if event == "ADDON_LOADED" then
+    HandleSettings()
+  end
+end)
 
 -- Artifacts
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) ManageTooltips("artifact", nil, ...) end)
