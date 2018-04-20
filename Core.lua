@@ -188,20 +188,22 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   local spellID
   
   if option == "default" then
-    spellID = select(3, self:GetSpell())
+    -- local spell = self:GetID()
+    -- print(spell)
+    -- spellID = select(3, self:GetSpellID())
   elseif option == "aura" then
-    spellID = select(11, UnitAura(...))
+    spellID = select(10, UnitAura(...))
   elseif option == "buff" then
-    spellID = select(11, UnitBuff(...)) 
+    spellID = select(10, UnitBuff(...)) 
   elseif option == "debuff" then
-    spellID = select(11, UnitDebuff(...))   
+    spellID = select(10, UnitDebuff(...))   
   elseif option == "ref" then
     spellID = MoreItemInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
   end
   
   if spellID ~= nil then
-    iMoreItemInfo.TooltipLine(self, spellID, "SpellID")
+    MoreItemInfo.TooltipLine(self, spellID, "SpellID")
     MoreItemInfo.RPPMTooltip(self, spellID)
   end
 
