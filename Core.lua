@@ -230,7 +230,7 @@ end
 
 function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
   -- HandleSettings()
-  print(tooltipType, option)
+  -- print(tooltipType, option)
   if tooltipType == "artifact" then
     MoreItemInfo.ArtifactTooltipOverride(...)
   elseif tooltipType =="spell" then
