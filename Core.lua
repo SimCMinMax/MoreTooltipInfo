@@ -189,14 +189,18 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   
   if option == "default" then
     -- local spell = self:GetID()
-    -- print(spell)
+    -- print(...)
     -- spellID = select(3, self:GetSpellID())
   elseif option == "aura" then
     spellID = select(10, UnitAura(...))
   elseif option == "buff" then
     spellID = select(10, UnitBuff(...)) 
   elseif option == "debuff" then
-    spellID = select(10, UnitDebuff(...))   
+    spellID = select(10, UnitDebuff(...))  
+  elseif option == "azerite" then
+    spellID = select(3, ...)
+  elseif option == "talent" then
+    spellID = select(1, ...)       
   elseif option == "ref" then
     spellID = MoreItemInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
@@ -226,7 +230,7 @@ end
 
 function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
   -- HandleSettings()
-  -- print(tooltipType, option)
+  print(tooltipType, option)
   if tooltipType == "artifact" then
     MoreItemInfo.ArtifactTooltipOverride(...)
   elseif tooltipType =="spell" then
@@ -248,15 +252,15 @@ end
 --   end
 -- end)
 
-
--- Artifacts
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
-
 -- Spells
 GameTooltip:HookScript("OnTooltipSetSpell", function (...) MoreItemInfo.ManageTooltips("spell", "default", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreItemInfo.ManageTooltips("spell", "buff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
+hooksecurefunc(GameTooltip, "SetAzeritePowerBySpellID", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
+hooksecurefunc(GameTooltip, "SetTalent", function (...) MoreItemInfo.ManageTooltips("spell", "talent", ...) end)
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
+
 hooksecurefunc("SetItemRef", function (...) MoreItemInfo.ManageTooltips("spell", "ref", ...) end)
 
 -- Items
