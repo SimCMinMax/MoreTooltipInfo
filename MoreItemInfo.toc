@@ -1,13 +1,13 @@
-## Interface: 70300
+## Interface: 80100
 ## Title: MoreItemInfo
 ## Notes: Adds informations about the item in tooltip (RPPM, ...)
 ## Author: Kutikuti
 ## SavedVariables: MoreItemInfoVars
+
 ## Version: 0.2
 
 Core.lua
 Settings.lua
-UI.lua
 
 
 #Enums

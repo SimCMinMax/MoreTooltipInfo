@@ -4,10 +4,10 @@ MoreItemInfo = MII
 
 MoreItemInfo.Enum = {}
 
-local settingsLoaded = false
-local userSettings = {}
+MoreItemInfo.SettingsLoaded = false
+MoreItemInfo.UserSettings = {}
 
-local function MergeTables(defaultTable, settingsTable, destinationTable)
+function MoreItemInfo.MergeTables(defaultTable, settingsTable, destinationTable)
 	for k,v in pairs(defaultTable) do
 		if settingsTable[k] == nil then
 			destinationTable[k] = v
@@ -18,20 +18,20 @@ local function MergeTables(defaultTable, settingsTable, destinationTable)
 	return destinationTable
 end
 
-local function HandleSettings()
-  if not settingsLoaded then
+function MoreItemInfo.HandleSettings()
+  if not MoreItemInfo.SettingsLoaded then
     if not MoreItemInfoVars then MoreItemInfoVars = {} end
-    MergeTables(MoreItemInfo.Settings,MoreItemInfoVars,userSettings)
-    settingsLoaded = true
+    MoreItemInfo.MergeTables(MoreItemInfo.Settings,MoreItemInfoVars,MoreItemInfo.UserSettings)
+    MoreItemInfo.SettingsLoaded = true
   end
 end
 
-local function TooltipLine(tooltip, info, infoType)
+function MoreItemInfo.TooltipLine(tooltip, info, infoType)
   tooltip:AddDoubleLine(infoType .. ":", "|cffffffff" .. info)
   tooltip:Show()
 end
 
-local function GetSpecID()
+function MoreItemInfo.GetSpecID()
   -- Spec Info
 	local globalSpecID
 	local specId = GetSpecialization()
@@ -41,29 +41,29 @@ local function GetSpecID()
 	return globalSpecID
 end
 
-local function GetRace()
+function MoreItemInfo.GetRace()
 	-- Race info
 	local _, playerRace = UnitRace('player')
   
   return playerRace
 end
 
-local function GetClassID()
+function MoreItemInfo.GetClassID()
 	-- Class info
 	local _, _, playerRace = UnitClass('player')
   
   return playerRace
 end
 
-local function GetHastePct()
+function MoreItemInfo.GetHastePct()
   return GetHaste()
 end
 
-local function GetCritPct()
+function MoreItemInfo.GetCritPct()
   return GetCritChance()
 end
 
-local function GetIDFromLink(linktype,Link)
+function MoreItemInfo.GetIDFromLink(linktype,Link)
 	local xString = string.match(Link, linktype .. ":([%-?%d:]+)")
 	local xSplit = {}
   
@@ -83,7 +83,7 @@ local function GetIDFromLink(linktype,Link)
 	return tonumber(xSplit[1])
 end
 
-local function GetItemSpellID(itemID)
+function MoreItemInfo.GetItemSpellID(itemID)
   if MoreItemInfo.Enum.ItemSpell[itemID] ~= nil then
     return MoreItemInfo.Enum.ItemSpell[itemID]
   else
@@ -91,7 +91,7 @@ local function GetItemSpellID(itemID)
   end
 end
 
-local function GetRPPM(spellID)
+function MoreItemInfo.GetRPPM(spellID)
   local rppmtable = {}
   if MoreItemInfo.Enum.RPPM[spellID] ~= nil then
     rppmtable = MoreItemInfo.Enum.RPPM[spellID]
@@ -159,32 +159,32 @@ local function GetRPPM(spellID)
   return rppmString
 end
 
-local function RPPMTooltip(destination, spellID)
+function MoreItemInfo.RPPMTooltip(destination, spellID)
   if spellID ~= nil then
-    local rppm = GetRPPM(spellID)
+    local rppm = MoreItemInfo.GetRPPM(spellID)
     if rppm ~= nil then
-      TooltipLine(destination, rppm, "RPPM")
+      MoreItemInfo.TooltipLine(destination, rppm, "RPPM")
     end
   end
 end
 
-local function ItemTooltipOverride(self)
+function MoreItemInfo.ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   if itemLink then
-    local itemID = GetIDFromLink("item",itemLink)
+    local itemID = MoreItemInfo.GetIDFromLink("item",itemLink)
     if itemID then
-      if userSettings.Tooltip.Spell.ItemID then TooltipLine(self, itemID, "ItemID") end
+      MoreItemInfo.TooltipLine(self, itemID, "ItemID")
       
-      local spellID = GetItemSpellID(itemID)
+      local spellID = MoreItemInfo.GetItemSpellID(itemID)
       if spellID then
-        if userSettings.Tooltip.Item.SpellID then TooltipLine(self, spellID, "SpellID") end
-        if userSettings.Tooltip.Item.RPPM then RPPMTooltip(self, GetItemSpellID(itemID)) end
+        MoreItemInfo.TooltipLine(self, spellID, "SpellID")
+        MoreItemInfo.RPPMTooltip(self, spellID)
       end     
     end
   end
 end
 
-local function SpellTooltipOverride(option, self, ...)
+function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   local spellID
   
   if option == "default" then
@@ -196,68 +196,72 @@ local function SpellTooltipOverride(option, self, ...)
   elseif option == "debuff" then
     spellID = select(11, UnitDebuff(...))   
   elseif option == "ref" then
-    spellID = GetIDFromLink("spell", self)
+    spellID = MoreItemInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
   end
   
   if spellID ~= nil then
-    if userSettings.Tooltip.Spell.SpellID then TooltipLine(self, spellID, "SpellID") end
-    if userSettings.Tooltip.Spell.RPPM then RPPMTooltip(self, spellID) end
+    iMoreItemInfo.TooltipLine(self, spellID, "SpellID")
+    MoreItemInfo.RPPMTooltip(self, spellID)
   end
 
 end
 
-local function ArtifactTooltipOverride(self, artifactPowerID)
+function MoreItemInfo.ArtifactTooltipOverride(self, artifactPowerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(artifactPowerID)
   local spellID = powerInfo.spellID
   
   if artifactPowerID then 
-    if userSettings.Tooltip.Artifact.ArtifactPowerID then TooltipLine(self, artifactPowerID, "ArtifactPowerID") end
+    TooltipLine(self, artifactPowerID, "ArtifactPowerID")
   end
   
   if spellID then 
-    if userSettings.Tooltip.Artifact.SpellID then TooltipLine(self, spellID, "SpellID") end
+    TooltipLine(self, spellID, "SpellID")
     
-    if userSettings.Tooltip.Artifact.RPPM then RPPMTooltip(self, spellID) end
+    RPPMTooltip(self, spellID)
   end
 end
 
-local function ManageTooltips(tooltipType, option, ...)
+function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
   -- HandleSettings()
   -- print(tooltipType, option)
   if tooltipType == "artifact" then
-    ArtifactTooltipOverride(...)
+    MoreItemInfo.ArtifactTooltipOverride(...)
   elseif tooltipType =="spell" then
-    SpellTooltipOverride(option, ...)
+    MoreItemInfo.SpellTooltipOverride(option, ...)
   elseif tooltipType =="item" then
-    ItemTooltipOverride(...)
+    MoreItemInfo.ItemTooltipOverride(...)
   end
 end
 
 -- Load Settings
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("ADDON_LOADED")
-eventFrame:SetScript("OnEvent", function(self, event, ...)
-  if event == "ADDON_LOADED" then
-    HandleSettings()
-  end
-end)
+-- local eventFrame = CreateFrame("Frame")
+-- eventFrame:RegisterEvent("ADDON_LOADED")
+-- eventFrame:SetScript("OnEvent", function(self, event, ...)
+--   if event == "ADDON_LOADED" then
+--     if not MoreItemInfo.SettingsLoaded then
+--       MoreItemInfo.HandleSettings()
+--       MoreItemInfo.CreateSettings()
+--     end
+--   end
+-- end)
+
 
 -- Artifacts
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) ManageTooltips("artifact", nil, ...) end)
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
 
 -- Spells
-GameTooltip:HookScript("OnTooltipSetSpell", function (...) ManageTooltips("spell", "default", ...) end)
-hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) ManageTooltips("spell", "buff", ...) end)
-hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) ManageTooltips("spell", "debuff", ...) end)
-hooksecurefunc(GameTooltip, "SetUnitAura", function (...) ManageTooltips("spell", "aura", ...) end)
-hooksecurefunc("SetItemRef", function (...) ManageTooltips("spell", "ref", ...) end)
+GameTooltip:HookScript("OnTooltipSetSpell", function (...) MoreItemInfo.ManageTooltips("spell", "default", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreItemInfo.ManageTooltips("spell", "buff", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageTooltips("spell", "debuff", ...) end)
+hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
+hooksecurefunc("SetItemRef", function (...) MoreItemInfo.ManageTooltips("spell", "ref", ...) end)
 
 -- Items
-GameTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-ItemRefTooltip:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) ManageTooltips("item", nil, ...) end)
-GameTooltip:HookScript("OnTooltipSetUnit", function(...) ManageTooltips("unit", nil, ...) end)
+GameTooltip:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+ItemRefTooltip:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
+GameTooltip:HookScript("OnTooltipSetUnit", function(...) MoreItemInfo.ManageTooltips("unit", nil, ...) end)
