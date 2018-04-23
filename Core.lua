@@ -159,11 +159,30 @@ function MoreItemInfo.GetRPPM(spellID)
   return rppmString
 end
 
+function MoreItemInfo.GetGCD(spellID)
+  local gcd = 0
+  if MoreItemInfo.Enum.TriggerGCD[spellID] ~= nil then
+    gcd = MoreItemInfo.Enum.TriggerGCD[spellID]
+  else
+    return nil
+  end
+  return gcd
+end
+
 function MoreItemInfo.RPPMTooltip(destination, spellID)
   if spellID ~= nil then
     local rppm = MoreItemInfo.GetRPPM(spellID)
     if rppm ~= nil then
       MoreItemInfo.TooltipLine(destination, rppm, "RPPM")
+    end
+  end
+end
+
+function MoreItemInfo.GCDTooltip(destination, spellID)
+  if spellID ~= nil then
+    local gcd = MoreItemInfo.GetGCD(spellID)
+    if gcd ~= nil then
+      MoreItemInfo.TooltipLine(destination, gcd, "GCD")
     end
   end
 end
@@ -200,7 +219,7 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "azerite" then
     spellID = select(3, ...)
   elseif option == "talent" then
-    spellID = select(1, ...)       
+    -- spellID = select(1, ...)       
   elseif option == "ref" then
     spellID = MoreItemInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
@@ -209,6 +228,7 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   if spellID ~= nil then
     MoreItemInfo.TooltipLine(self, spellID, "SpellID")
     MoreItemInfo.RPPMTooltip(self, spellID)
+    MoreItemInfo.GCDTooltip(self, spellID)
   end
 
 end
