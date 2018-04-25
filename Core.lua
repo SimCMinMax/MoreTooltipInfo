@@ -27,8 +27,20 @@ function MoreItemInfo.HandleSettings()
 end
 
 function MoreItemInfo.TooltipLine(tooltip, info, infoType)
-  tooltip:AddDoubleLine(infoType .. ":", "|cffffffff" .. info)
-  tooltip:Show()
+  local found = false
+
+  -- Check if we already added to this tooltip. Happens on the talent frame
+  for i = 1,15 do
+    local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
+    local text
+    if frame then text = frame:GetText() end
+    if text and text == infoType then found = true break end
+  end
+
+  if not found then
+    tooltip:AddDoubleLine(infoType, "|cffffffff" .. info)
+    tooltip:Show()
+  end
 end
 
 function MoreItemInfo.GetSpecID()
@@ -209,7 +221,6 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   
   if option == "default" then
     spellID = select(2, self:GetSpell())
-    print(spellID)
   elseif option == "aura" then
     spellID = select(10, UnitAura(...))
   elseif option == "buff" then
