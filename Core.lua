@@ -182,6 +182,7 @@ function MoreItemInfo.GCDTooltip(destination, spellID)
   if spellID ~= nil then
     local gcd = MoreItemInfo.GetGCD(spellID)
     if gcd ~= nil then
+      gcd = gcd / 1000
       MoreItemInfo.TooltipLine(destination, gcd, "GCD")
     end
   end
@@ -207,9 +208,8 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   local spellID
   
   if option == "default" then
-    -- local spell = self:GetID()
-    -- print(...)
-    -- spellID = select(3, self:GetSpellID())
+    spellID = select(2, self:GetSpell())
+    print(spellID)
   elseif option == "aura" then
     spellID = select(10, UnitAura(...))
   elseif option == "buff" then
@@ -217,9 +217,7 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "debuff" then
     spellID = select(10, UnitDebuff(...))  
   elseif option == "azerite" then
-    spellID = select(3, ...)
-  elseif option == "talent" then
-    -- spellID = select(1, ...)       
+    spellID = select(3, ...)      
   elseif option == "ref" then
     spellID = MoreItemInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
@@ -238,13 +236,13 @@ function MoreItemInfo.ArtifactTooltipOverride(self, artifactPowerID)
   local spellID = powerInfo.spellID
   
   if artifactPowerID then 
-    TooltipLine(self, artifactPowerID, "ArtifactPowerID")
+    MoreItemInfo.TooltipLine(self, artifactPowerID, "ArtifactPowerID")
   end
   
   if spellID then 
-    TooltipLine(self, spellID, "SpellID")
-    
-    RPPMTooltip(self, spellID)
+    MoreItemInfo.TooltipLine(self, spellID, "SpellID")
+    MoreItemInfo.RPPMTooltip(self, spellID)
+    MoreItemInfo.GCDTooltip(self, spellID)
   end
 end
 
@@ -278,7 +276,7 @@ hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreItemInfo.ManageToo
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
 hooksecurefunc(GameTooltip, "SetAzeritePowerBySpellID", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
-hooksecurefunc(GameTooltip, "SetTalent", function (...) MoreItemInfo.ManageTooltips("spell", "talent", ...) end)
+-- hooksecurefunc(GameTooltip, "SetTalent", function (...) MoreItemInfo.ManageTooltips("spell", "talent", ...) end)
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
 
 hooksecurefunc("SetItemRef", function (...) MoreItemInfo.ManageTooltips("spell", "ref", ...) end)
