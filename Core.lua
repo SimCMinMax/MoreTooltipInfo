@@ -111,9 +111,9 @@ function MoreItemInfo.GetRPPM(spellID)
     return nil
   end
   
-  local specID = GetSpecID()
-  local classID = GetClassID()
-  local race = GetRace()
+  local specID = MoreItemInfo.GetSpecID()
+  local classID = MoreItemInfo.GetClassID()
+  local race = MoreItemInfo.GetRace()
   
   local baseRPPM = rppmtable[0]
   
@@ -159,11 +159,11 @@ function MoreItemInfo.GetRPPM(spellID)
     rppmString = baseRPPM
   end
   if modHaste then
-    local currentHasteRating = GetHastePct()
+    local currentHasteRating = MoreItemInfo.GetHastePct()
     local hastedRPPM = rppmString * (1 + (currentHasteRating / 100))
     rppmString = rppmString .. " (Hasted : " .. string.format("%.4f", hastedRPPM) ..")"
   elseif modCrit then
-    local currentCritRating = GetCritPct()
+    local currentCritRating = MoreItemInfo.GetCritPct()
     local critRPPM = rppmString * (1 + (currentCritRating / 100))
     rppmString = rppmString .. " (Crit : " .. string.format("%.4f", critRPPM) ..")"
   end
