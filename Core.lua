@@ -50,21 +50,21 @@ function MoreItemInfo.GetSpecID()
 	if specId then
 		globalSpecID = GetSpecializationInfo(specId)
 	end
-	return globalSpecID
+	return tonumber(globalSpecID)
 end
 
 function MoreItemInfo.GetRace()
 	-- Race info
 	local _, playerRace = UnitRace('player')
   
-  return playerRace
+  return tonumber(playerRace)
 end
 
 function MoreItemInfo.GetClassID()
 	-- Class info
 	local _, _, playerRace = UnitClass('player')
   
-  return playerRace
+  return tonumber(playerRace)
 end
 
 function MoreItemInfo.GetHastePct()
@@ -93,6 +93,23 @@ function MoreItemInfo.GetIDFromLink(linktype,Link)
 	end
 
 	return tonumber(xSplit[1])
+end
+
+function MoreItemInfo.GetItemLevelFromTooltip(tooltip)
+  local itemLink = tooltip:GetItem()
+  if not itemLink then return end
+
+  for i = 2, tooltip:NumLines() do
+    local text = _G[tooltip:GetName() .. "TextLeft"..i]:GetText()
+
+    if(text and text ~= "") then
+        local value = tonumber(text:match(ITEM_LEVEL:gsub("%%d", "(%%d+)")))
+
+        if value then
+            return value
+        end
+    end
+  end
 end
 
 function MoreItemInfo.GetItemSpellID(itemID)
@@ -181,6 +198,23 @@ function MoreItemInfo.GetGCD(spellID)
   return gcd
 end
 
+function MoreItemInfo.GetDPS(itemID,tooltip)
+  local dps
+  local specID = MoreItemInfo.GetSpecID()
+  local classID = MoreItemInfo.GetClassID()
+  if MoreItemInfo.Enum.ItemDPS[itemID] ~= nil then
+    local itemData = MoreItemInfo.Enum.ItemDPS[itemID]
+    local itemlevel = MoreItemInfo.GetItemLevelFromTooltip(tooltip)
+    if itemlevel then
+      if itemData[classID][specID][itemlevel] then
+        dps = itemData[classID][specID][itemlevel]
+      end
+    end
+  end
+
+  return dps
+end
+
 function MoreItemInfo.RPPMTooltip(destination, spellID)
   if spellID ~= nil then
     local rppm = MoreItemInfo.GetRPPM(spellID)
@@ -200,13 +234,24 @@ function MoreItemInfo.GCDTooltip(destination, spellID)
   end
 end
 
+function MoreItemInfo.DPSTooltip(destination, itemID)
+  if itemID ~= nil then
+    local dps = MoreItemInfo.GetDPS(itemID,destination)
+    if dps ~= nil then
+      MoreItemInfo.TooltipLine(destination, dps, "DPS")
+    end
+  end
+end
+
 function MoreItemInfo.ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   if itemLink then
-    local itemID = MoreItemInfo.GetIDFromLink("item",itemLink)
+    local itemID = tonumber(MoreItemInfo.GetIDFromLink("item",itemLink))
     if itemID then
       MoreItemInfo.TooltipLine(self, itemID, "ItemID")
       
+      MoreItemInfo.DPSTooltip(self, itemID)
+
       local spellID = MoreItemInfo.GetItemSpellID(itemID)
       if spellID then
         MoreItemInfo.TooltipLine(self, spellID, "SpellID")

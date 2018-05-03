@@ -13,4 +13,5 @@ Settings.lua
 #Enums
 Enum\RPPM.lua
 Enum\ItemSpell.lua
+Enum\ItemDPS.lua
 Enum\TriggerGCD.lua
