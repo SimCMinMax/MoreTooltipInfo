@@ -4,28 +4,6 @@ MoreItemInfo = MII
 
 MoreItemInfo.Enum = {}
 
-MoreItemInfo.SettingsLoaded = false
-MoreItemInfo.UserSettings = {}
-
-function MoreItemInfo.MergeTables(defaultTable, settingsTable, destinationTable)
-	for k,v in pairs(defaultTable) do
-		if settingsTable[k] == nil then
-			destinationTable[k] = v
-		else
-			destinationTable[k] = settingsTable[k]
-		end
-	end
-	return destinationTable
-end
-
-function MoreItemInfo.HandleSettings()
-  if not MoreItemInfo.SettingsLoaded then
-    if not MoreItemInfoVars then MoreItemInfoVars = {} end
-    MoreItemInfo.MergeTables(MoreItemInfo.Settings,MoreItemInfoVars,MoreItemInfo.UserSettings)
-    MoreItemInfo.SettingsLoaded = true
-  end
-end
-
 function MoreItemInfo.TooltipLine(tooltip, info, infoType)
   local found = false
 
@@ -34,7 +12,10 @@ function MoreItemInfo.TooltipLine(tooltip, info, infoType)
     local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
     local text
     if frame then text = frame:GetText() end
-    if text and text == infoType then found = true break end
+    if text and text == infoType then 
+      found = true 
+      break 
+    end
   end
 
   if not found then
@@ -45,13 +26,13 @@ end
 
 function MoreItemInfo.FormatSpace(number)
   local formatted = number
+
   while true do  
     formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1 %2')
     if (k == 0) then
-      break
+      return formatted
     end
   end
-  return formatted
 end
 
 function MoreItemInfo.GetSpecID()
@@ -114,28 +95,24 @@ function MoreItemInfo.GetItemLevelFromTooltip(tooltip)
     local text = _G[tooltip:GetName() .. "TextLeft"..i]:GetText()
 
     if(text and text ~= "") then
-        local value = tonumber(text:match(ITEM_LEVEL:gsub("%%d", "(%%d+)")))
-
-        if value then
-            return value
-        end
+      local value = tonumber(text:match(ITEM_LEVEL:gsub("%%d", "(%%d+)")))
+      if value then
+        return value
+      end
     end
   end
 end
 
 function MoreItemInfo.GetItemSpellID(itemID)
-  if MoreItemInfo.Enum.ItemSpell[itemID] ~= nil then
-    return MoreItemInfo.Enum.ItemSpell[itemID]
-  else
-    return nil
+  local spellID = MoreItemInfo.Enum.ItemSpell[itemID]
+  if spellID then
+    return spellID
   end
 end
 
 function MoreItemInfo.GetRPPM(spellID)
-  local rppmtable = {}
-  if MoreItemInfo.Enum.RPPM[spellID] ~= nil then
-    rppmtable = MoreItemInfo.Enum.RPPM[spellID]
-  else
+  local rppmtable = MoreItemInfo.Enum.RPPM[spellID]
+  if not rppmtable then
     return nil
   end
   
@@ -146,42 +123,42 @@ function MoreItemInfo.GetRPPM(spellID)
   local baseRPPM = rppmtable[0]
   
   local modHaste = false
-  if rppmtable[1] ~= nil then
+  if rppmtable[1] then
     modHaste = true
   end
   local modCrit = false
-  if rppmtable[2] ~= nil then
+  if rppmtable[2] then
     modCrit = true
   end
   
   local modRace = nil
-  if rppmtable[5] ~= nil then
-    if rppmtable[5][race] ~= nil then
+  if rppmtable[5] then
+    if rppmtable[5][race] then
       modRace = rppmtable[5][race]
     end
   end
   
   local modClass = nil
-  if rppmtable[3] ~= nil then
-    if rppmtable[3][classID] ~= nil then
+  if rppmtable[3] then
+    if rppmtable[3][classID] then
       modClass = rppmtable[3][classID]
     end
   end
   
   local modSpec = nil
-  if rppmtable[4] ~= nil then
-    if rppmtable[4][specID] ~= nil then
+  if rppmtable[4] then
+    if rppmtable[4][specID] then
       modSpec = rppmtable[4][bspecID]
     end
   end
     
   local rppmString = ""
   
-  if modRace ~= nil then
+  if modRace then
     rppmString = modRace
-  elseif modClass~= nil then
+  elseif modClass then
     rppmString = modClass
-  elseif modSpec~= nil then
+  elseif modSpec then
     rppmString = modSpec
   else
     rppmString = baseRPPM
@@ -213,7 +190,8 @@ function MoreItemInfo.GetDPS(itemID,tooltip)
   local dps
   local specID = MoreItemInfo.GetSpecID()
   local classID = MoreItemInfo.GetClassID()
-  if MoreItemInfo.Enum.ItemDPS[itemID] ~= nil then
+
+  if MoreItemInfo.Enum.ItemDPS[itemID] then
     local itemData = MoreItemInfo.Enum.ItemDPS[itemID]
     local itemlevel = MoreItemInfo.GetItemLevelFromTooltip(tooltip)
     if itemlevel then
@@ -227,18 +205,18 @@ function MoreItemInfo.GetDPS(itemID,tooltip)
 end
 
 function MoreItemInfo.RPPMTooltip(destination, spellID)
-  if spellID ~= nil then
+  if spellID then
     local rppm = MoreItemInfo.GetRPPM(spellID)
-    if rppm ~= nil then
+    if rppm then
       MoreItemInfo.TooltipLine(destination, rppm, "RPPM")
     end
   end
 end
 
 function MoreItemInfo.GCDTooltip(destination, spellID)
-  if spellID ~= nil then
+  if spellID then
     local gcd = MoreItemInfo.GetGCD(spellID)
-    if gcd ~= nil then
+    if gcd then
       gcd = gcd / 1000
       MoreItemInfo.TooltipLine(destination, gcd, "GCD")
     end
@@ -246,10 +224,10 @@ function MoreItemInfo.GCDTooltip(destination, spellID)
 end
 
 function MoreItemInfo.DPSTooltip(destination, itemID)
-  if itemID ~= nil then
+  if itemID then
     local dps = MoreItemInfo.GetDPS(itemID,destination)
-    if dps ~= nil then
-      MoreItemInfo.TooltipLine(destination, dps, "DPS")
+    if dps then
+      MoreItemInfo.TooltipLine(destination, dps, "simDPS")
     end
   end
 end
@@ -261,13 +239,13 @@ function MoreItemInfo.ItemTooltipOverride(self)
     if itemID then
       MoreItemInfo.TooltipLine(self, itemID, "ItemID")
       
-      MoreItemInfo.DPSTooltip(self, itemID)
-
       local spellID = MoreItemInfo.GetItemSpellID(itemID)
       if spellID then
         MoreItemInfo.TooltipLine(self, spellID, "SpellID")
         MoreItemInfo.RPPMTooltip(self, spellID)
-      end     
+      end    
+
+      MoreItemInfo.DPSTooltip(self, itemID) 
     end
   end
 end
@@ -290,7 +268,7 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
     self = ItemRefTooltip
   end
   
-  if spellID ~= nil then
+  if spellID then
     MoreItemInfo.TooltipLine(self, spellID, "SpellID")
     MoreItemInfo.RPPMTooltip(self, spellID)
     MoreItemInfo.GCDTooltip(self, spellID)
@@ -314,7 +292,6 @@ function MoreItemInfo.ArtifactTooltipOverride(self, artifactPowerID)
 end
 
 function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
-  -- HandleSettings()
   -- print(tooltipType, option)
   if tooltipType == "artifact" then
     MoreItemInfo.ArtifactTooltipOverride(...)
@@ -325,17 +302,9 @@ function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
   end
 end
 
--- Load Settings
--- local eventFrame = CreateFrame("Frame")
--- eventFrame:RegisterEvent("ADDON_LOADED")
--- eventFrame:SetScript("OnEvent", function(self, event, ...)
---   if event == "ADDON_LOADED" then
---     if not MoreItemInfo.SettingsLoaded then
---       MoreItemInfo.HandleSettings()
---       MoreItemInfo.CreateSettings()
---     end
---   end
--- end)
+-------------------
+-- Tooltip hooks --
+-------------------
 
 -- Spells
 GameTooltip:HookScript("OnTooltipSetSpell", function (...) MoreItemInfo.ManageTooltips("spell", "default", ...) end)
@@ -343,10 +312,10 @@ hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreItemInfo.ManageToo
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
 hooksecurefunc(GameTooltip, "SetAzeritePower", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
--- hooksecurefunc(GameTooltip, "SetTalent", function (...) MoreItemInfo.ManageTooltips("spell", "talent", ...) end)
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
-
 hooksecurefunc("SetItemRef", function (...) MoreItemInfo.ManageTooltips("spell", "ref", ...) end)
+
+-- Artifact
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
 
 -- Items
 GameTooltip:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
