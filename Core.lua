@@ -286,7 +286,7 @@ GameTooltip:HookScript("OnTooltipSetSpell", function (...) MoreItemInfo.ManageTo
 hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreItemInfo.ManageTooltips("spell", "buff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
-hooksecurefunc(GameTooltip, "SetAzeritePowerBySpellID", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
+hooksecurefunc(GameTooltip, "SetAzeritePower", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
 -- hooksecurefunc(GameTooltip, "SetTalent", function (...) MoreItemInfo.ManageTooltips("spell", "talent", ...) end)
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
 
