@@ -43,6 +43,17 @@ function MoreItemInfo.TooltipLine(tooltip, info, infoType)
   end
 end
 
+function MoreItemInfo.FormatSpace(number)
+  local formatted = number
+  while true do  
+    formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1 %2')
+    if (k == 0) then
+      break
+    end
+  end
+  return formatted
+end
+
 function MoreItemInfo.GetSpecID()
   -- Spec Info
 	local globalSpecID
@@ -207,7 +218,7 @@ function MoreItemInfo.GetDPS(itemID,tooltip)
     local itemlevel = MoreItemInfo.GetItemLevelFromTooltip(tooltip)
     if itemlevel then
       if itemData[classID][specID][itemlevel] then
-        dps = itemData[classID][specID][itemlevel]
+        dps = MoreItemInfo.FormatSpace(itemData[classID][specID][itemlevel])
       end
     end
   end
