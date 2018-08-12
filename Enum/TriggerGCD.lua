@@ -1,5 +1,5 @@
 -- Generated using WoW 8.0.1.27219 client data on 2018-08-04T09:22:19.841117.
-HeroLib.Enum.TriggerGCD = {
+MoreItemInfo.Enum.TriggerGCD = {
   [17] = 1500,
   [53] = 1000,
   [66] = 1500,
