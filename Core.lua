@@ -232,6 +232,12 @@ function MoreItemInfo.DPSTooltip(destination, itemID)
   end
 end
 
+function MoreItemInfo.AzeritePowerTooltip(destination, azeritePowerID)
+  if azeritePowerID then
+    MoreItemInfo.TooltipLine(destination, azeritePowerID, "AzeritePowerID")
+  end
+end
+
 function MoreItemInfo.ItemTooltipOverride(self)
   local itemLink = select(2, self:GetItem())
   if itemLink then
@@ -272,30 +278,15 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
     MoreItemInfo.TooltipLine(self, spellID, "SpellID")
     MoreItemInfo.RPPMTooltip(self, spellID)
     MoreItemInfo.GCDTooltip(self, spellID)
-  end
-
-end
-
-function MoreItemInfo.ArtifactTooltipOverride(self, artifactPowerID)
-  local powerInfo = C_ArtifactUI.GetPowerInfo(artifactPowerID)
-  local spellID = powerInfo.spellID
-  
-  if artifactPowerID then 
-    MoreItemInfo.TooltipLine(self, artifactPowerID, "ArtifactPowerID")
-  end
-  
-  if spellID then 
-    MoreItemInfo.TooltipLine(self, spellID, "SpellID")
-    MoreItemInfo.RPPMTooltip(self, spellID)
-    MoreItemInfo.GCDTooltip(self, spellID)
+    if option == "azerite" then
+      MoreItemInfo.AzeritePowerTooltip(self, spellID)
+    end
   end
 end
 
 function MoreItemInfo.ManageTooltips(tooltipType, option, ...)
   -- print(tooltipType, option)
-  if tooltipType == "artifact" then
-    MoreItemInfo.ArtifactTooltipOverride(...)
-  elseif tooltipType =="spell" then
+  if tooltipType =="spell" then
     MoreItemInfo.SpellTooltipOverride(option, ...)
   elseif tooltipType =="item" then
     MoreItemInfo.ItemTooltipOverride(...)
@@ -313,9 +304,6 @@ hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreItemInfo.ManageT
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreItemInfo.ManageTooltips("spell", "aura", ...) end)
 hooksecurefunc(GameTooltip, "SetAzeritePower", function (...) MoreItemInfo.ManageTooltips("spell", "azerite", ...) end)
 hooksecurefunc("SetItemRef", function (...) MoreItemInfo.ManageTooltips("spell", "ref", ...) end)
-
--- Artifact
-hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function (...) MoreItemInfo.ManageTooltips("artifact", nil, ...) end)
 
 -- Items
 GameTooltip:HookScript("OnTooltipSetItem", function (...) MoreItemInfo.ManageTooltips("item", nil, ...) end)
