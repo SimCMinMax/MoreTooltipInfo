@@ -234,7 +234,7 @@ end
 
 function MoreItemInfo.AzeritePowerTooltip(destination, azeritePowerID)
   if azeritePowerID then
-    MoreItemInfo.TooltipLine(destination, azeritePowerID, "AzeritePowerID")
+    MoreItemInfo.TooltipLine(destination, azeritePowerID, "Azerite Power ID")
   end
 end
 
@@ -243,11 +243,11 @@ function MoreItemInfo.ItemTooltipOverride(self)
   if itemLink then
     local itemID = tonumber(MoreItemInfo.GetIDFromLink("item",itemLink))
     if itemID then
-      MoreItemInfo.TooltipLine(self, itemID, "ItemID")
+      MoreItemInfo.TooltipLine(self, itemID, "Item ID")
       
       local spellID = MoreItemInfo.GetItemSpellID(itemID)
       if spellID then
-        MoreItemInfo.TooltipLine(self, spellID, "SpellID")
+        MoreItemInfo.TooltipLine(self, spellID, "Spell ID")
         MoreItemInfo.RPPMTooltip(self, spellID)
       end    
 
@@ -275,11 +275,16 @@ function MoreItemInfo.SpellTooltipOverride(option, self, ...)
   end
   
   if spellID then
-    MoreItemInfo.TooltipLine(self, spellID, "SpellID")
+    MoreItemInfo.TooltipLine(self, spellID, "Spell ID")
     MoreItemInfo.RPPMTooltip(self, spellID)
     MoreItemInfo.GCDTooltip(self, spellID)
     if option == "azerite" then
       MoreItemInfo.AzeritePowerTooltip(self, spellID)
+    end
+    local enchantID = MoreItemInfo.Enum.SpellEnchants[spellID]
+    if enchantID then --echant, we put enchant id and rppm
+      MoreItemInfo.TooltipLine(self, enchantID, "Enchant Spell ID")
+      MoreItemInfo.RPPMTooltip(self, enchantID)
     end
   end
 end
