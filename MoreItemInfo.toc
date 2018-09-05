@@ -1,4 +1,4 @@
-## Interface: 80100
+## Interface: 80000
 ## Title: MoreItemInfo
 ## Notes: Adds informations about items and spells in tooltip (RPPM, GCD, simDPS...)
 ## Author: Kutikuti
