@@ -4,7 +4,7 @@
 ## Author: Kutikuti
 ## SavedVariables: MoreItemInfoVars
 
-## Version: 0.4
+## Version: 1.0.3
 
 Core.lua
 Settings.lua
