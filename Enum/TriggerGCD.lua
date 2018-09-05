@@ -1,4 +1,4 @@
--- Generated using WoW 8.0.1.27481 client data on 2018-08-30T21:43:21.520167.
+-- Generated using WoW 8.0.1.27547 client data on 2018-09-05T14:56:15.003460.
 MoreItemInfo.Enum.TriggerGCD = {
   [17] = 1500,
   [53] = 1000,
