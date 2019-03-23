@@ -194,7 +194,7 @@ function MoreItemInfo.GetDPS(itemID,tooltip)
   if MoreItemInfo.Enum.ItemDPS[itemID] then
     local itemData = MoreItemInfo.Enum.ItemDPS[itemID]
     local itemlevel = MoreItemInfo.GetItemLevelFromTooltip(tooltip)
-    if itemlevel then
+    if itemlevel and specID and classID and itemData then
       if itemData[classID][specID][itemlevel] then
         dps = MoreItemInfo.FormatSpace(itemData[classID][specID][itemlevel])
       end
