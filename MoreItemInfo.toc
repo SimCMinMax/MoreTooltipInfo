@@ -1,10 +1,10 @@
-## Interface: 80000
+## Interface: 80100
 ## Title: MoreItemInfo
 ## Notes: Adds informations about items and spells in tooltip (RPPM, GCD, simDPS...)
 ## Author: Kutikuti
 ## SavedVariables: MoreItemInfoVars
 
-## Version: 1.0.4
+## Version: 1.0.5
 
 Core.lua
 Settings.lua

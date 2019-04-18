@@ -1,3 +1,6 @@
+v1.0.5 03/22/2019
+[FIX] Add nil security
+
 v0.2 03/01/2018
 [UI] Added RPPM calculation (haste and crit)
 [UI] Added RPPM for spells (incl artifacts)
