@@ -1,5 +1,5 @@
 -- Generated using WoW 8.1.5.29981 client data on 2019-04-18T10:33:03.890585.
-MoreItemInfo.Enum.SpellEnchants = {
+MoreTooltipInfo.Enum.SpellEnchants = {
   [81] = 3,
   [107] = 3,
   [108] = 3,

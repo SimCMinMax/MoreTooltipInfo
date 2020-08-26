@@ -1,5 +1,5 @@
 -- Generated using WoW 8.1.5.29981 client data on 2019-04-18T10:33:03.890585.
-MoreItemInfo.Enum.TriggerGCD = {
+MoreTooltipInfo.Enum.TriggerGCD = {
   [17] = 1500,
   [53] = 1000,
   [66] = 1500,

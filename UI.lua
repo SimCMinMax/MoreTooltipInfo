@@ -6,19 +6,19 @@ local CreatePanel = GUI.CreatePanel;
 local CreateChildPanel = GUI.CreateChildPanel;
 local CreatePanelOption = GUI.CreatePanelOption;
   
-function MoreItemInfo.CreateSettings()
-  local ARPanel = CreatePanel(MoreItemInfo, "MoreItemInfo", "PanelFrame", MoreItemInfo.Settings, MoreItemInfoVars);
+function MoreTooltipInfo.CreateSettings()
+  local ARPanel = CreatePanel(MoreTooltipInfo, "MoreTooltipInfo", "PanelFrame", MoreTooltipInfo.Settings, MoreTooltipInfoVars);
   CreatePanelOption("CheckButton", ARPanel, "Tooltip.Item.ItemID", "Item ItemID", "Enable if you want to see item ID.");
 
-  -- MoreItemInfo.panel = CreateFrame( "Frame", "MyAddonPanel", UIParent );
-  -- MoreItemInfo.panel.name = "MoreItemInfo";
+  -- MoreTooltipInfo.panel = CreateFrame( "Frame", "MyAddonPanel", UIParent );
+  -- MoreTooltipInfo.panel.name = "MoreTooltipInfo";
    -- Add the panel to the Interface Options
-  -- InterfaceOptions_AddCategory(MoreItemInfo.panel);
+  -- InterfaceOptions_AddCategory(MoreTooltipInfo.panel);
   
-  -- MoreItemInfo.AddCheckBox(MoreItemInfo.panel,"MoreItemInfoVars.Tooltip.Spell.SpellID","Spell SpellID","Enable Spell SpellID")
+  -- MoreTooltipInfo.AddCheckBox(MoreTooltipInfo.panel,"MoreTooltipInfoVars.Tooltip.Spell.SpellID","Spell SpellID","Enable Spell SpellID")
 end
 local LastOptionAttached = {};
-function MoreItemInfo.AddCheckBox(Parent, Setting, Text, Tooltip, Optionals)
+function MoreTooltipInfo.AddCheckBox(Parent, Setting, Text, Tooltip, Optionals)
     -- Constructor
     local CheckButton = CreateFrame("CheckButton", "$parent_"..Setting, Parent, "InterfaceOptionsCheckButtonTemplate");
     Parent[Setting] = CheckButton;

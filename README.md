@@ -1,7 +1,7 @@
-# MoreItemInfo
+# MoreTooltipInfo
 
 ## Overview
-MoreItemInfo allows you to add useful informations about items in the tooltip. Currently only RPPM but i have plan to add other useful information.
+MoreTooltipInfo allows you to add useful informations about items in the tooltip. Currently only RPPM but i have plan to add other useful information.
 
 Don't hesitate to go on the [SimcMinMax] Discord to ask about specific stuff.
 

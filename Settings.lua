@@ -1,4 +1,4 @@
-MoreItemInfo.Settings = {
+MoreTooltipInfo.Settings = {
   Tooltip = {
     Item = {
       ItemID = true,

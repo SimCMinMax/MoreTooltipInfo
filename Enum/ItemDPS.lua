@@ -1,5 +1,5 @@
 -- itemID -> class -> spec -> itemlevel
-MoreItemInfo.Enum.ItemDPS = {
+MoreTooltipInfo.Enum.ItemDPS = {
     [158712] = {
         [6] = {
             [250] = {
