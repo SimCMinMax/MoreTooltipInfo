@@ -16,3 +16,4 @@ Enum\ItemSpell.lua
 Enum\ItemDPS.lua
 Enum\TriggerGCD.lua
 Enum\SpellEnchants.lua
+Enum\ConduitsSpell.lua

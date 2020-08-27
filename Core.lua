@@ -110,6 +110,13 @@ function MoreTooltipInfo.GetItemSpellID(itemID)
   end
 end
 
+function MoreTooltipInfo.GetConduitSpellID(conduitID)
+  local spellID = MoreTooltipInfo.Enum.Conduits[conduitID]
+  if spellID then
+    return spellID
+  end
+end
+
 function MoreTooltipInfo.GetRPPM(spellID)
   local rppmtable = MoreTooltipInfo.Enum.RPPM[spellID]
   if not rppmtable then
@@ -204,7 +211,7 @@ function MoreTooltipInfo.GetDPS(itemID,tooltip)
   return dps
 end
 
-function MoreIMoreTooltipInfotemInfo.RPPMTooltip(destination, spellID)
+function MoreTooltipInfo.RPPMTooltip(destination, spellID)
   if spellID then
     local rppm = MoreTooltipInfo.GetRPPM(spellID)
     if rppm then
@@ -269,6 +276,11 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
     spellID = select(10, UnitDebuff(...))  
   elseif option == "azerite" then
     spellID = select(3, ...)      
+  elseif option == "conduit" then
+    local conduitID = select(1, ...)
+    --get spell id from game file
+    --print(select(1, ...),select(2, ...))
+    spellID = MoreTooltipInfo.GetConduitSpellID(select(1, ...))   
   elseif option == "ref" then
     spellID = MoreTooltipInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
@@ -281,6 +293,10 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
     if option == "azerite" then
       MoreTooltipInfo.AzeritePowerTooltip(self, spellID)
     end
+    if option == "conduit" then
+      MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID")
+      MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank")
+    end
     local enchantID = MoreTooltipInfo.Enum.SpellEnchants[spellID]
     if enchantID then --echant, we put enchant id and rppm
       MoreTooltipInfo.TooltipLine(self, enchantID, "Enchant Spell ID")
@@ -290,7 +306,7 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
 end
 
 function MoreTooltipInfo.ManageTooltips(tooltipType, option, ...)
-  -- print(tooltipType, option)
+  --print(tooltipType, option)
   if tooltipType =="spell" then
     MoreTooltipInfo.SpellTooltipOverride(option, ...)
   elseif tooltipType =="item" then
@@ -308,6 +324,7 @@ hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreTooltipInfo.Manage
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreTooltipInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreTooltipInfo.ManageTooltips("spell", "aura", ...) end)
 hooksecurefunc(GameTooltip, "SetAzeritePower", function (...) MoreTooltipInfo.ManageTooltips("spell", "azerite", ...) end)
+hooksecurefunc(GameTooltip, "SetConduit", function (...) MoreTooltipInfo.ManageTooltips("spell", "conduit", ...) end)
 hooksecurefunc("SetItemRef", function (...) MoreTooltipInfo.ManageTooltips("spell", "ref", ...) end)
 
 -- Items
