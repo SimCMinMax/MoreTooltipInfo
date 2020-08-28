@@ -25,17 +25,21 @@ If there is hotfixes in game, you will just have to update the addon to get the 
   - Artifact ID
   - Spell ID
   - RPPM
+- Soulbinds :
+  - Spell ID
+- Conduits
+  - Conduit ID
+  - Spell ID
+  - Rank
  
 ## Known issues and development plan
 - Add more data to the addon
-  - TextureName/ID
   - Spell OnGCD
   - Spell TickTime
   - Item deck of cards 
   - Item BonusID
   - Item GemIDs
   - Item enchantID
-  - Item relicID
 
 - Add a panel to enable/disable data in tooltip
 
