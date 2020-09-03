@@ -67,6 +67,22 @@ function MoreTooltipInfo.GetCritPct()
   return GetCritChance()
 end
 
+function MoreTooltipInfo.GetItemSplit(itemLink)
+  local itemString = string.match(itemLink, "item:([%-?%d:]+)")
+  local itemSplit = {}
+
+  -- Split data into a table
+  for _, v in ipairs({strsplit(":", itemString)}) do
+    if v == "" then
+      itemSplit[#itemSplit + 1] = 0
+    else
+      itemSplit[#itemSplit + 1] = tonumber(v)
+    end
+  end
+
+  return itemSplit
+end
+
 function MoreTooltipInfo.GetIDFromLink(linktype,Link)
 	local xString = string.match(Link, linktype .. ":([%-?%d:]+)")
 	local xSplit = {}
@@ -85,6 +101,84 @@ function MoreTooltipInfo.GetIDFromLink(linktype,Link)
 	end
 
 	return tonumber(xSplit[1])
+end
+
+function MoreTooltipInfo.GetItemBonusID(itemSplit)
+  local bonuses = {}
+
+  for index=1, itemSplit[13] do
+    bonuses[#bonuses + 1] = itemSplit[13 + index]
+  end
+
+  if #bonuses > 0 then
+    return table.concat(bonuses, '/')
+  end
+end
+
+function MoreTooltipInfo.GetGemItemID(itemLink, index)
+  local _, gemLink = GetItemGem(itemLink, index)
+  if gemLink ~= nil then
+    local itemIdStr = string.match(gemLink, "item:(%d+)")
+    if itemIdStr ~= nil then
+      return tonumber(itemIdStr)
+    end
+  end
+
+  return 0
+end
+
+function MoreTooltipInfo.GetGemBonuses(itemLink, index)
+  local bonuses = {}
+  local _, gemLink = GetItemGem(itemLink, index)
+  if gemLink ~= nil then
+    local gemSplit = MoreTooltipInfo.GetItemSplit(gemLink)
+    for index=1, gemSplit[13] do
+      bonuses[#bonuses + 1] = gemSplit[13 + index]
+    end
+  end
+
+  if #bonuses > 0 then
+    return table.concat(bonuses, ':')
+  end
+
+  return 0
+end
+
+function MoreTooltipInfo.getGemString(self,itemLink)
+  local gems = {}
+  local gemBonuses = {}
+
+  local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
+
+  for gemOffset = 3, 6 do
+    local gemIndex = (gemOffset - 3) + 1
+    if itemSplit[gemOffset] > 0 then
+      local gemId = MoreTooltipInfo.GetGemItemID(itemLink, gemIndex)
+      if gemId > 0 then
+        gems[gemIndex] = gemId
+        gemBonuses[gemIndex] = MoreTooltipInfo.GetGemBonuses(itemLink, gemIndex)
+      end
+    else
+      gems[gemIndex] = 0
+      gemBonuses[gemIndex] = 0
+    end
+  end
+
+  -- Remove any trailing zeros from the gems array
+  while #gems > 0 and gems[#gems] == 0 do
+    table.remove(gems, #gems)
+  end
+  -- Remove any trailing zeros from the gem bonuses
+  while #gemBonuses > 0 and gemBonuses[#gemBonuses] == 0 do
+    table.remove(gemBonuses, #gemBonuses)
+  end
+
+  if #gems > 0 then
+    MoreTooltipInfo.TooltipLine(self, table.concat(gems, '/'), "GemID")
+    if #gemBonuses > 0 then
+      MoreTooltipInfo.TooltipLine(self, table.concat(gemBonuses, '/'), "GemBonusID")
+    end
+  end
 end
 
 function MoreTooltipInfo.GetItemLevelFromTooltip(tooltip)
@@ -211,11 +305,15 @@ function MoreTooltipInfo.GetDPS(itemID,tooltip)
   return dps
 end
 
-function MoreTooltipInfo.RPPMTooltip(destination, spellID)
+function MoreTooltipInfo.RPPMTooltip(destination, spellID, forceTitle)
   if spellID then
     local rppm = MoreTooltipInfo.GetRPPM(spellID)
     if rppm then
-      MoreTooltipInfo.TooltipLine(destination, rppm, "RPPM")
+      local title = "RPPM"
+      if forceTitle then
+        title = forceTitle
+      end
+      MoreTooltipInfo.TooltipLine(destination, rppm, title)
     end
   end
 end
@@ -250,11 +348,30 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
   if itemLink then
     local itemID = tonumber(MoreTooltipInfo.GetIDFromLink("item",itemLink))
     if itemID then
-      MoreTooltipInfo.TooltipLine(self, itemID, "Item ID")
+      MoreTooltipInfo.TooltipLine(self, itemID, "ItemID")
+
+      local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
+
+      local bonusID = MoreTooltipInfo.GetItemBonusID(itemSplit)
+      if bonusID then
+        MoreTooltipInfo.TooltipLine(self, bonusID, "BonusID")
+      end
+
+      local enchantID = itemSplit[2]
+      if enchantID > 0 then
+        MoreTooltipInfo.TooltipLine(self, enchantID, "EnchantID")
+        local enchantSpellID = MoreTooltipInfo.Enum.SpellEnchants[enchantID]
+        if enchantSpellID then --enchant, we put enchant spellid and rppm
+          MoreTooltipInfo.TooltipLine(self, enchantSpellID, "Enchant SpellID")
+          MoreTooltipInfo.RPPMTooltip(self, enchantSpellID, "Enchant RPPM")
+        end
+      end
+
+      MoreTooltipInfo.getGemString(self,itemLink)
       
       local spellID = MoreTooltipInfo.GetItemSpellID(itemID)
       if spellID then
-        MoreTooltipInfo.TooltipLine(self, spellID, "Spell ID")
+        MoreTooltipInfo.TooltipLine(self, spellID, "SpellID")
         MoreTooltipInfo.RPPMTooltip(self, spellID)
       end    
 
@@ -287,7 +404,7 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   end
   
   if spellID then
-    MoreTooltipInfo.TooltipLine(self, spellID, "Spell ID")
+    MoreTooltipInfo.TooltipLine(self, spellID, "SpellID")
     MoreTooltipInfo.RPPMTooltip(self, spellID)
     MoreTooltipInfo.GCDTooltip(self, spellID)
     if option == "azerite" then
@@ -296,11 +413,6 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
     if option == "conduit" then
       MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID")
       MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank")
-    end
-    local enchantID = MoreTooltipInfo.Enum.SpellEnchants[spellID]
-    if enchantID then --echant, we put enchant id and rppm
-      MoreTooltipInfo.TooltipLine(self, enchantID, "Enchant Spell ID")
-      MoreTooltipInfo.RPPMTooltip(self, enchantID)
     end
   end
 end

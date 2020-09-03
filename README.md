@@ -14,32 +14,34 @@ The simulationcraft team built powerful tools to extract all kind of data and al
 If there is hotfixes in game, you will just have to update the addon to get the latest data.
 
 ## Currently available data
-- Spell :
+- Spell:
   - ID
   - RPPM
-- Item :
+- Item:
   - ID
   - Spell ID
   - RPPM
-- Artifact :
+  - bonusID
+  - gemID
+  - enchantID
+  - enchant spellID
+  - enchant RPPM
+- Artifact:
   - Artifact ID
   - Spell ID
   - RPPM
-- Soulbinds :
+- Soulbinds:
   - Spell ID
-- Conduits
+- Conduits:
   - Conduit ID
   - Spell ID
   - Rank
  
 ## Known issues and development plan
 - Add more data to the addon
-  - Spell OnGCD
   - Spell TickTime
-  - Item deck of cards 
-  - Item BonusID
-  - Item GemIDs
-  - Item enchantID
+
+- Import personnal data for item dps
 
 - Add a panel to enable/disable data in tooltip
 
