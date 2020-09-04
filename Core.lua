@@ -4,6 +4,40 @@ MoreTooltipInfo = MII
 
 MoreTooltipInfo.Enum = {}
 
+local _G = _G
+
+local ACD = LibStub("AceConfigDialog-3.0")
+local ACR = LibStub("AceConfigRegistry-3.0")
+
+local cfg
+local dbDefaults = {
+	char = {},
+}
+local charDefaults = { 
+  enableSpellID = true,
+  enableSpellRPPM = true,
+  enableSpellGCD = true,
+  enableItemID = true,
+  enableItemSpellID = true,
+  enableItemRPPM = true,
+  enableItemBonusID = true,
+  enableItemGemID = true,
+  enableItemEnchantID = true,
+  enableItemEnchantSpellID = true,
+  enableItemEnchantSpellRPPM = true,
+  enableItemDPS = true,
+  enableSoulbindID = true,
+  enableConduitID = true,
+  enableConduitSpellID = true,
+  enableConduitRank = true
+}
+
+local f = CreateFrame("Frame")
+f:SetScript("OnEvent", function(self, event, ...)
+	return self[event] and self[event](self, event, ...)
+end)
+f:RegisterEvent("ADDON_LOADED")
+
 function MoreTooltipInfo.TooltipLine(tooltip, info, infoType)
   local found = false
 
@@ -348,34 +382,34 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
   if itemLink then
     local itemID = tonumber(MoreTooltipInfo.GetIDFromLink("item",itemLink))
     if itemID then
-      MoreTooltipInfo.TooltipLine(self, itemID, "ItemID")
+      if cfg.enableItemID then MoreTooltipInfo.TooltipLine(self, itemID, "ItemID") end
 
       local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
 
       local bonusID = MoreTooltipInfo.GetItemBonusID(itemSplit)
       if bonusID then
-        MoreTooltipInfo.TooltipLine(self, bonusID, "BonusID")
+        if cfg.enableItemBonusID then MoreTooltipInfo.TooltipLine(self, bonusID, "BonusID") end
       end
 
       local enchantID = itemSplit[2]
       if enchantID > 0 then
-        MoreTooltipInfo.TooltipLine(self, enchantID, "EnchantID")
+        if cfg.enableItemEnchantID then MoreTooltipInfo.TooltipLine(self, enchantID, "EnchantID") end
         local enchantSpellID = MoreTooltipInfo.Enum.SpellEnchants[enchantID]
         if enchantSpellID then --enchant, we put enchant spellid and rppm
-          MoreTooltipInfo.TooltipLine(self, enchantSpellID, "Enchant SpellID")
-          MoreTooltipInfo.RPPMTooltip(self, enchantSpellID, "Enchant RPPM")
+          if cfg.enableItemEnchantSpellID then MoreTooltipInfo.TooltipLine(self, enchantSpellID, "Enchant SpellID") end
+          if cfg.enableItemEnchantSpellRPPM then MoreTooltipInfo.RPPMTooltip(self, enchantSpellID, "Enchant RPPM") end
         end
       end
 
-      MoreTooltipInfo.getGemString(self,itemLink)
+      if cfg.enableItemGemID then MoreTooltipInfo.getGemString(self,itemLink) end
       
       local spellID = MoreTooltipInfo.GetItemSpellID(itemID)
       if spellID then
-        MoreTooltipInfo.TooltipLine(self, spellID, "SpellID")
-        MoreTooltipInfo.RPPMTooltip(self, spellID)
+        if cfg.enableItemSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "SpellID") end
+        if cfg.enableItemRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
       end    
 
-      MoreTooltipInfo.DPSTooltip(self, itemID) 
+      if cfg.enableItemDPS then MoreTooltipInfo.DPSTooltip(self, itemID) end
     end
   end
 end
@@ -390,9 +424,7 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "buff" then
     spellID = select(10, UnitBuff(...)) 
   elseif option == "debuff" then
-    spellID = select(10, UnitDebuff(...))  
-  elseif option == "azerite" then
-    spellID = select(3, ...)      
+    spellID = select(10, UnitDebuff(...))   
   elseif option == "conduit" then
     local conduitID = select(1, ...)
     --get spell id from game file
@@ -403,15 +435,15 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   end
   
   if spellID then
-    MoreTooltipInfo.TooltipLine(self, spellID, "SpellID")
-    MoreTooltipInfo.RPPMTooltip(self, spellID)
-    MoreTooltipInfo.GCDTooltip(self, spellID)
-    if option == "azerite" then
-      MoreTooltipInfo.AzeritePowerTooltip(self, spellID)
+    if option ~= "conduit" then
+      if cfg.enableSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "SpellID") end
     end
+    if cfg.enableSpellRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
+    if cfg.enableSpellGCD then MoreTooltipInfo.GCDTooltip(self, spellID) end
     if option == "conduit" then
-      MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID")
-      MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank")
+      if cfg.enableConduitID then MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID") end
+      if cfg.enableConduitRank then MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank") end
+      if cfg.enableConduitSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "ConduitSpellID") end
     end
   end
 end
@@ -425,6 +457,211 @@ function MoreTooltipInfo.ManageTooltips(tooltipType, option, ...)
   end
 end
 
+function MoreTooltipInfo:initDB(db, defaults)
+	if type(db) ~= "table" then db = {} end
+	if type(defaults) ~= "table" then return db end
+	for k, v in pairs(defaults) do
+		if type(v) == "table" then
+			db[k] = MoreTooltipInfo:initDB(db[k], v)
+		elseif type(v) ~= type(db[k]) then
+			db[k] = v
+		end
+	end
+	return db
+end
+
+-------------------
+-- Interface UI  --
+-------------------
+
+function f:CreateOptions()
+	if self.optionsFrame then return end
+
+	-- Config showing in the Blizzard Options
+	local blizzOptions = {
+		type = "group",
+		name = addonName,
+		order = 103,
+		get = function(info) return cfg[ info[#info] ] end,
+		set = function(info, value) cfg[ info[#info] ] = value; end,
+		args = {
+      gSpell = {
+				type = "group",
+				name = "Spells",
+				inline = true,
+				order = 0,
+				args = {
+					enableSpellID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable SpellID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable SpellID", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 0,
+          },
+          enableSpellRPPM = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 1,
+          },
+          enableSpellGCD = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Spell GCD" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 2,
+          },
+        },
+      },
+      gItem = {
+        type = "group",
+        name = "Items",
+        inline = true,
+        order = 1,
+        args = {
+          enableItemID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable ItemID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable SpellID", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 0,
+          },
+          enableItemSpellID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell ID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 1,
+          },
+          enableItemRPPM = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 2,
+          },
+          enableItemBonusID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item BonusID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 3,
+          },
+          enableItemGemID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item GemID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 4,
+          },
+          enableItemEnchantID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item EnchantID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 5,
+          },
+          enableItemEnchantSpellID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell ID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 6,
+          },
+          enableItemEnchantSpellRPPM = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 7,
+          },
+          enableItemDPS = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 8,
+          },
+        },
+      },
+      gSoulbind = {
+        type = "group",
+        name = "Soulbinds",
+        inline = true,
+        order = 2,
+        args = {
+          enableSoulbindID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable SoulbindID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable SpellID", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 0,
+          },
+        },
+      },
+      gConduit = {
+        type = "group",
+        name = "Conduits",
+        inline = true,
+        order = 3,
+        args = {
+          enableConduitID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable ConduitsID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable SpellID", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 0,
+          },
+          enableConduitSpellID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits SpellID" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 1,
+          },
+          enableConduitRank = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits rank" .. FONT_COLOR_CODE_CLOSE,
+            --desc = format("Enable Spell RPPM", addonName),
+            descStyle = "inline",
+            width = "full",
+            order = 2,
+          },
+        },
+      },
+		},
+  }
+  
+--[[
+  enableItemID = true,
+  enableItemSpellID = true,
+  enableItemRPPM = true,
+  enableItemBonusID = true,
+  enableItemGemID = true,
+  enableItemEnchantID = true,
+  enableItemEnchantSpellID = true,
+  enableItemEnchantSpellRPPM = true,]]
+
+	ACR:RegisterOptionsTable(addonName.."BlizzInfo", blizzOptions, false)
+	self.optionsFrame = ACD:AddToBlizOptions(addonName.."BlizzInfo", addonName)
+end
+
 -------------------
 -- Tooltip hooks --
 -------------------
@@ -434,7 +671,6 @@ GameTooltip:HookScript("OnTooltipSetSpell", function (...) MoreTooltipInfo.Manag
 hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreTooltipInfo.ManageTooltips("spell", "buff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreTooltipInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreTooltipInfo.ManageTooltips("spell", "aura", ...) end)
-hooksecurefunc(GameTooltip, "SetAzeritePower", function (...) MoreTooltipInfo.ManageTooltips("spell", "azerite", ...) end)
 hooksecurefunc(GameTooltip, "SetConduit", function (...) MoreTooltipInfo.ManageTooltips("spell", "conduit", ...) end)
 hooksecurefunc("SetItemRef", function (...) MoreTooltipInfo.ManageTooltips("spell", "ref", ...) end)
 
@@ -446,3 +682,19 @@ ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreToolti
 ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
 GameTooltip:HookScript("OnTooltipSetUnit", function(...) MoreTooltipInfo.ManageTooltips("unit", nil, ...) end)
+
+---------------------
+--Events management -
+---------------------
+function f:ADDON_LOADED(event, addon)
+  if addon == addonName then
+    MoreTooltipInfoVars = MoreTooltipInfo:initDB(MoreTooltipInfoVars, dbDefaults)
+    db = MoreTooltipInfoVars
+    local playerName = UnitName("player")
+    local playerRealm = GetRealmName()
+    db.char[playerRealm] = db.char[playerRealm] or {}
+		db.char[playerRealm][playerName] = MoreTooltipInfo:initDB(db.char[playerRealm][playerName], charDefaults)
+		cfg = db.char[playerRealm][playerName]
+    self:CreateOptions()
+  end
+end

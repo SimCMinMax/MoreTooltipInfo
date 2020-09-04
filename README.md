@@ -17,6 +17,7 @@ If there is hotfixes in game, you will just have to update the addon to get the 
 - Spell:
   - ID
   - RPPM
+  - GCD
 - Item:
   - ID
   - Spell ID
@@ -26,10 +27,7 @@ If there is hotfixes in game, you will just have to update the addon to get the 
   - enchantID
   - enchant spellID
   - enchant RPPM
-- Artifact:
-  - Artifact ID
-  - Spell ID
-  - RPPM
+  - Simulated DPS
 - Soulbinds:
   - Spell ID
 - Conduits:
@@ -42,8 +40,6 @@ If there is hotfixes in game, you will just have to update the addon to get the 
   - Spell TickTime
 
 - Import personnal data for item dps
-
-- Add a panel to enable/disable data in tooltip
 
 - Add notifications when data changes
 

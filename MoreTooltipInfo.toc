@@ -5,10 +5,13 @@
 ## SavedVariables: MoreTooltipInfoVars
 
 ## Version: 2.0.0
+LibStub\LibStub.lua
+CallbackHandler-1.0\CallbackHandler-1.0.lua
+AceGUI-3.0\AceGUI-3.0.xml
+AceConfig-3.0\AceConfig-3.0.xml
 
 Core.lua
 Settings.lua
-
 
 #Enums
 Enum\RPPM.lua
