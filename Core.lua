@@ -1,13 +1,13 @@
-local addonName, MII = ...;
-
-MoreTooltipInfo = MII
-
+local addonName, MTI = ...;
+MoreTooltipInfo = MTI
 MoreTooltipInfo.Enum = {}
 
 local _G = _G
-
 local ACD = LibStub("AceConfigDialog-3.0")
 local ACR = LibStub("AceConfigRegistry-3.0")
+
+local dataVersion = "9.0.1.35755"
+local dataDate = "2020-09-03_14:04"
 
 local cfg
 local dbDefaults = {
@@ -477,10 +477,26 @@ end
 function f:CreateOptions()
 	if self.optionsFrame then return end
 
-	-- Config showing in the Blizzard Options
-	local blizzOptions = {
+  -- Config showing in the Blizzard Options
+  local mainPanel = {
 		type = "group",
-		name = addonName,
+		name = addonName .." options",
+		order = 103,
+		get = function(info) return cfg[ info[#info] ] end,
+		set = function(info, value) cfg[ info[#info] ] = value; end,
+		args = {
+      version = {
+        type = "description",
+        name = NORMAL_FONT_COLOR_CODE .. "Data version: " .. HIGHLIGHT_FONT_COLOR_CODE .. dataVersion .. " (" .. dataDate .. ")" .. FONT_COLOR_CODE_CLOSE,
+        fontSize = "medium",
+        width = "full",
+        order = 1,
+      },
+		},
+  }
+	local tooltipPanel = {
+		type = "group",
+		name = "Tooltip options",
 		order = 103,
 		get = function(info) return cfg[ info[#info] ] end,
 		set = function(info, value) cfg[ info[#info] ] = value; end,
@@ -494,7 +510,6 @@ function f:CreateOptions()
 					enableSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable SpellID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable SpellID", addonName),
             descStyle = "inline",
             width = "full",
             order = 0,
@@ -502,7 +517,6 @@ function f:CreateOptions()
           enableSpellRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 1,
@@ -510,7 +524,6 @@ function f:CreateOptions()
           enableSpellGCD = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Spell GCD" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 2,
@@ -526,7 +539,6 @@ function f:CreateOptions()
           enableItemID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable ItemID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable SpellID", addonName),
             descStyle = "inline",
             width = "full",
             order = 0,
@@ -534,7 +546,6 @@ function f:CreateOptions()
           enableItemSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell ID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 1,
@@ -542,7 +553,6 @@ function f:CreateOptions()
           enableItemRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 2,
@@ -550,7 +560,6 @@ function f:CreateOptions()
           enableItemBonusID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item BonusID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 3,
@@ -558,7 +567,6 @@ function f:CreateOptions()
           enableItemGemID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item GemID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 4,
@@ -566,7 +574,6 @@ function f:CreateOptions()
           enableItemEnchantID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item EnchantID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 5,
@@ -574,7 +581,6 @@ function f:CreateOptions()
           enableItemEnchantSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell ID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 6,
@@ -582,18 +588,9 @@ function f:CreateOptions()
           enableItemEnchantSpellRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 7,
-          },
-          enableItemDPS = {
-            type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
-            descStyle = "inline",
-            width = "full",
-            order = 8,
           },
         },
       },
@@ -606,7 +603,6 @@ function f:CreateOptions()
           enableSoulbindID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable SoulbindID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable SpellID", addonName),
             descStyle = "inline",
             width = "full",
             order = 0,
@@ -622,7 +618,6 @@ function f:CreateOptions()
           enableConduitID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable ConduitsID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable SpellID", addonName),
             descStyle = "inline",
             width = "full",
             order = 0,
@@ -630,7 +625,6 @@ function f:CreateOptions()
           enableConduitSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits SpellID" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 1,
@@ -638,7 +632,6 @@ function f:CreateOptions()
           enableConduitRank = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits rank" .. FONT_COLOR_CODE_CLOSE,
-            --desc = format("Enable Spell RPPM", addonName),
             descStyle = "inline",
             width = "full",
             order = 2,
@@ -647,19 +640,30 @@ function f:CreateOptions()
       },
 		},
   }
-  
---[[
-  enableItemID = true,
-  enableItemSpellID = true,
-  enableItemRPPM = true,
-  enableItemBonusID = true,
-  enableItemGemID = true,
-  enableItemEnchantID = true,
-  enableItemEnchantSpellID = true,
-  enableItemEnchantSpellRPPM = true,]]
+  local itemDPSPanel = {
+		type = "group",
+		name = "Item DPS options",
+		order = 103,
+		get = function(info) return cfg[ info[#info] ] end,
+		set = function(info, value) cfg[ info[#info] ] = value; end,
+		args = {
+      enableItemDPS = {
+        type = "toggle",
+        name = NORMAL_FONT_COLOR_CODE .. "Enable Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+        descStyle = "inline",
+        width = "full",
+        order = 0,
+      },
+		},
+  }
 
-	ACR:RegisterOptionsTable(addonName.."BlizzInfo", blizzOptions, false)
-	self.optionsFrame = ACD:AddToBlizOptions(addonName.."BlizzInfo", addonName)
+  self.optionsFrame = ACD:AddToBlizOptions(addonName, addonName["MoreTooltipInfo"])
+	self.optionsFrame = ACD:AddToBlizOptions("Tooltip options", addonName["TooltipOptions"], addonName)
+	self.optionsFrame = ACD:AddToBlizOptions("Item DPS", addonName["ItemDPS"], addonName)
+
+  ACR:RegisterOptionsTable(addonName, mainPanel, false)
+	ACR:RegisterOptionsTable("Tooltip options", tooltipPanel, false)
+  ACR:RegisterOptionsTable("Item DPS", itemDPSPanel, false)
 end
 
 -------------------
