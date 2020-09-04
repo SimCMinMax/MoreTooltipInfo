@@ -295,7 +295,7 @@ function MoreTooltipInfo.GetDPS(itemID,tooltip)
   if MoreTooltipInfo.Enum.ItemDPS[itemID] then
     local itemData = MoreTooltipInfo.Enum.ItemDPS[itemID]
     local itemlevel = MoreTooltipInfo.GetItemLevelFromTooltip(tooltip)
-    if itemlevel and specID and classID and itemData then
+    if itemlevel and specID and classID and #itemData > 0 then
       if itemData[classID][specID][itemlevel] then
         dps = MoreTooltipInfo.FormatSpace(itemData[classID][specID][itemlevel])
       end
@@ -396,7 +396,6 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "conduit" then
     local conduitID = select(1, ...)
     --get spell id from game file
-    --print(select(1, ...),select(2, ...))
     spellID = MoreTooltipInfo.GetConduitSpellID(select(1, ...))   
   elseif option == "ref" then
     spellID = MoreTooltipInfo.GetIDFromLink("spell", self)
