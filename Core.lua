@@ -5,13 +5,16 @@ MoreTooltipInfo.Enum = {}
 local _G = _G
 local ACD = LibStub("AceConfigDialog-3.0")
 local ACR = LibStub("AceConfigRegistry-3.0")
+local IUI = LibStub("LibItemUpgradeInfo-1.0")
 
-local dataVersion = "9.0.1.35755"
-local dataDate = "2020-09-03_14:04"
+local dataVersion = "9.0.1.35854"
+local dataDate = "2020-09-10_08:47"
 
 local cfg
+local profiles
 local dbDefaults = {
-	char = {},
+  char = {},
+  profiles = {},
 }
 local charDefaults = { 
   enableSpellID = true,
@@ -25,12 +28,31 @@ local charDefaults = {
   enableItemEnchantID = true,
   enableItemEnchantSpellID = true,
   enableItemEnchantSpellRPPM = true,
-  enableItemDPS = true,
+  enableBaseItemDPS = true,
+  enablePersonnalItemDPS = true,
   enableSoulbindID = true,
   enableConduitID = true,
   enableConduitSpellID = true,
   enableConduitRank = true
 }
+local profileDefaults = { 
+  trinket = {},
+  soulbind={},
+  conduit={}
+}
+
+function dumptable(o)
+  if type(o) == 'table' then
+     local s = '{ '
+     for k,v in pairs(o) do
+        if type(k) ~= 'number' then k = '"'..k..'"' end
+        s = s .. '['..k..'] = ' .. dumptable(v) .. ','
+     end
+     return s .. '} '
+  else
+     return tostring(o)
+  end
+end
 
 local f = CreateFrame("Frame")
 f:SetScript("OnEvent", function(self, event, ...)
@@ -215,22 +237,6 @@ function MoreTooltipInfo.getGemString(self,itemLink)
   end
 end
 
-function MoreTooltipInfo.GetItemLevelFromTooltip(tooltip)
-  local itemLink = tooltip:GetItem()
-  if not itemLink then return end
-
-  for i = 2, tooltip:NumLines() do
-    local text = _G[tooltip:GetName() .. "TextLeft"..i]:GetText()
-
-    if(text and text ~= "") then
-      local value = tonumber(text:match(ITEM_LEVEL:gsub("%%d", "(%%d+)")))
-      if value then
-        return value
-      end
-    end
-  end
-end
-
 function MoreTooltipInfo.GetItemSpellID(itemID)
   local spellID = MoreTooltipInfo.Enum.ItemSpell[itemID]
   if spellID then
@@ -321,16 +327,15 @@ function MoreTooltipInfo.GetGCD(spellID)
   return gcd
 end
 
-function MoreTooltipInfo.GetDPS(itemID,tooltip)
+function MoreTooltipInfo.GetDPS(itemLink,itemID,tooltip)
   local dps
   local specID = MoreTooltipInfo.GetSpecID()
   local classID = MoreTooltipInfo.GetClassID()
-
   if MoreTooltipInfo.Enum.ItemDPS[itemID] then
     local itemData = MoreTooltipInfo.Enum.ItemDPS[itemID]
-    local itemlevel = MoreTooltipInfo.GetItemLevelFromTooltip(tooltip)
-    if itemlevel and specID and classID and #itemData > 0 then
-      if itemData[classID][specID][itemlevel] then
+    local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
+    if itemlevel and specID and classID then
+      if itemData[classID] and itemData[classID][specID] and itemData[classID][specID][itemlevel] then
         dps = MoreTooltipInfo.FormatSpace(itemData[classID][specID][itemlevel])
       end
     end
@@ -362,13 +367,81 @@ function MoreTooltipInfo.GCDTooltip(destination, spellID)
   end
 end
 
-function MoreTooltipInfo.DPSTooltip(destination, itemID)
+function MoreTooltipInfo.DPSTooltip(destination, itemLink, itemID, personnalData)
   if itemID then
-    local dps = MoreTooltipInfo.GetDPS(itemID,destination)
-    if dps then
-      MoreTooltipInfo.TooltipLine(destination, dps, "simDPS")
+    if not personnalData then
+      local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
+      if dps then
+        MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
+      end
+    else --check profiles
+      local specID = MoreTooltipInfo.GetSpecID()
+      local classID = MoreTooltipInfo.GetClassID()
+      local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
+      if profiles["trinket"][classID] == nil then return end
+      if profiles["trinket"][classID][specID] == nil then return end
+      for i, v in pairs(profiles["trinket"][classID][specID]) do
+        if v[itemID] and v[itemID][itemlevel] then
+          dps = MoreTooltipInfo.FormatSpace(v[itemID][itemlevel])
+          MoreTooltipInfo.TooltipLine(destination, dps, i)
+        end
+      end
     end
   end
+end
+
+function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
+  -- Split data into a table
+  local stringSplit = {strsplit(":",value)}
+
+  -- check MTI string
+  if stringSplit[1] ~= "MoreTooltipInfo" then return false end
+
+  -- check class
+  if tonumber(stringSplit[2]) == 0 or tonumber(stringSplit[2]) > 12 then return false end
+  local classID = tonumber(stringSplit[2])
+
+  -- check specs
+  if tonumber(stringSplit[3]) < 62 or tonumber(stringSplit[2]) > 581 then return false end
+  local specID = tonumber(stringSplit[3])
+
+  --Profile Name
+  local profileName = stringSplit[4]:gsub('"', '')
+
+  -- Split data into a table
+  local dpsData = {strsplit("^",stringSplit[5])}
+  
+  if dpsData[1] == "trinket" then
+    -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999|[174500]125=123;130=456;135=789
+    -- MoreTooltipInfo:12:1:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999|[174500]125=123;130=456;135=789
+    if profiles["trinket"][classID] == nil then profiles["trinket"][classID] = {} end
+    if profiles["trinket"][classID][specID] == nil then profiles["trinket"][classID][specID] = {} end
+
+    if profiles["trinket"][classID][specID][profileName] ~= nil then print("exists") end
+    
+    local trinketData = {}
+    --trinketData[classID] = {}
+    --trinketData[classID][specID] = {}
+
+    for i, v in ipairs(dpsData) do
+      if i ~= 1 then -- 1 is the type
+        local itemID,ilvlData = strsplit("]",v)
+        itemID = tonumber(string.sub(itemID,2))
+        if itemID then
+          --trinketData[classID][specID][itemID] = {}    
+          trinketData[itemID] = {}      
+          for _, w in ipairs({strsplit(";", ilvlData)}) do
+            local ilvl,dps = strsplit("=",w)
+            --trinketData[classID][specID][tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
+            trinketData[tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
+          end
+        end
+      end
+    end
+    profiles["trinket"][classID][specID][profileName] = trinketData;
+  end
+
+  return true
 end
 
 function MoreTooltipInfo.AzeritePowerTooltip(destination, azeritePowerID)
@@ -409,7 +482,8 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
         if cfg.enableItemRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
       end    
 
-      if cfg.enableItemDPS then MoreTooltipInfo.DPSTooltip(self, itemID) end
+      if cfg.enableBaseItemDPS then MoreTooltipInfo.DPSTooltip(self, itemLink, itemID, false) end
+      if cfg.enablePersonnalItemDPS then MoreTooltipInfo.DPSTooltip(self, itemLink, itemID, true) end
     end
   end
 end
@@ -510,21 +584,18 @@ function f:CreateOptions()
 					enableSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable SpellID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 0,
           },
           enableSpellRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 1,
           },
           enableSpellGCD = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Spell GCD" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 2,
           },
@@ -539,56 +610,48 @@ function f:CreateOptions()
           enableItemID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable ItemID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 0,
           },
           enableItemSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell ID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 1,
           },
           enableItemRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 2,
           },
           enableItemBonusID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item BonusID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 3,
           },
           enableItemGemID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item GemID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 4,
           },
           enableItemEnchantID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item EnchantID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 5,
           },
           enableItemEnchantSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell ID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 6,
           },
           enableItemEnchantSpellRPPM = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Item Enchant Spell RPPM" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 7,
           },
@@ -603,7 +666,6 @@ function f:CreateOptions()
           enableSoulbindID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable SoulbindID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 0,
           },
@@ -618,21 +680,18 @@ function f:CreateOptions()
           enableConduitID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable ConduitsID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 0,
           },
           enableConduitSpellID = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits SpellID" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 1,
           },
           enableConduitRank = {
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits rank" .. FONT_COLOR_CODE_CLOSE,
-            descStyle = "inline",
             width = "full",
             order = 2,
           },
@@ -650,9 +709,17 @@ function f:CreateOptions()
       enableItemDPS = {
         type = "toggle",
         name = NORMAL_FONT_COLOR_CODE .. "Enable Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
-        descStyle = "inline",
         width = "full",
         order = 0,
+      },
+      customdata = {
+        order = 1,
+        type = "input",
+        name = "Use custom item DPS",
+        width = "full",
+        get = function(info) return cfg[ info[#info] ] end,
+		    set = function(info, value) if MoreTooltipInfo.ValidateItemPersonnalData(info,value) then cfg[ info[#info] ] = value; end; end,
+        multiline = true,
       },
 		},
   }
@@ -697,8 +764,10 @@ function f:ADDON_LOADED(event, addon)
     local playerName = UnitName("player")
     local playerRealm = GetRealmName()
     db.char[playerRealm] = db.char[playerRealm] or {}
-		db.char[playerRealm][playerName] = MoreTooltipInfo:initDB(db.char[playerRealm][playerName], charDefaults)
-		cfg = db.char[playerRealm][playerName]
+    db.char[playerRealm][playerName] = MoreTooltipInfo:initDB(db.char[playerRealm][playerName], charDefaults)
+    db.profiles = MoreTooltipInfo:initDB(db.profiles, profileDefaults)
+    cfg = db.char[playerRealm][playerName]
+    profiles = db.profiles
     self:CreateOptions()
   end
 end

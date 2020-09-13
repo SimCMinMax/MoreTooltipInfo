@@ -9,6 +9,7 @@ LibStub\LibStub.lua
 CallbackHandler-1.0\CallbackHandler-1.0.lua
 AceGUI-3.0\AceGUI-3.0.xml
 AceConfig-3.0\AceConfig-3.0.xml
+LibItemUpgradeInfo-1.0\LibItemUpgradeInfo-1.0.xml
 
 Core.lua
 Settings.lua

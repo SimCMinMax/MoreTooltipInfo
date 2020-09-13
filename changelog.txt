@@ -1,7 +1,10 @@
-v2.0.0 08/26/2020
+v2.0.0 xx/xx/2020
 [All] Shadowland availability
 [All] Rename addon to MoreTooltipInfo
 [UI] Add conduit spellID and rank
+[UI] Add bonusID, gemID, enchantID, enchant spell ID, enchant spell RPPM
+[UI] Add UI in option interface to enable/disable each option
+[UI] Add the ability to import personnal data for trinket DPS
 
 v1.0.5 03/22/2019
 [FIX] Add nil security
