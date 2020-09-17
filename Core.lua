@@ -6,8 +6,9 @@ local _G = _G
 local ACD = LibStub("AceConfigDialog-3.0")
 local ACR = LibStub("AceConfigRegistry-3.0")
 local IUI = LibStub("LibItemUpgradeInfo-1.0")
+local AGUI= LibStub("AceGUI-3.0")
 
-local dataVersion = "9.0.1.35854"
+local dataVersion = "9.0.2.35854"
 local dataDate = "2020-09-10_08:47"
 
 local cfg
@@ -40,19 +41,40 @@ local profileDefaults = {
   soulbind={},
   conduit={}
 }
-
-function dumptable(o)
-  if type(o) == 'table' then
-     local s = '{ '
-     for k,v in pairs(o) do
-        if type(k) ~= 'number' then k = '"'..k..'"' end
-        s = s .. '['..k..'] = ' .. dumptable(v) .. ','
-     end
-     return s .. '} '
-  else
-     return tostring(o)
-  end
-end
+local UIElements={
+  mainframe,
+  mainGroup,
+  scroll1,
+  tableLabel={},
+  spacerTable={},
+  detailsGroup,
+  scroll2,
+  titleLabel,
+  renameButton,
+  deleteButton,
+  importButton,
+  enablecheckbox,
+  colorpicker,
+}
+local UIParameters={
+	--Consts
+	OFFSET_ITEM_ID 		= 1,
+	OFFSET_ENCHANT_ID = 2,
+	OFFSET_GEM_ID_1 	= 3,
+	OFFSET_GEM_ID_2 	= 4,
+	OFFSET_GEM_ID_3 	= 5,
+	OFFSET_GEM_ID_4 	= 6,
+	OFFSET_SUFFIX_ID 	= 7,
+	OFFSET_FLAGS 		  = 11,
+	OFFSET_BONUS_ID 	= 13,
+  
+  detailsLoaded=false,
+  detailsDrawn=false,
+  mainframeCreated=false,
+  currentProfile="",
+  currentClassID=0,
+  currentSpecID=0,
+}
 
 local f = CreateFrame("Frame")
 f:SetScript("OnEvent", function(self, event, ...)
@@ -60,7 +82,18 @@ f:SetScript("OnEvent", function(self, event, ...)
 end)
 f:RegisterEvent("ADDON_LOADED")
 
-function MoreTooltipInfo.TooltipLine(tooltip, info, infoType)
+-- Command UI
+SLASH_MORETOOLTIPINFOSLASH1 = "/mti"
+SlashCmdList["MORETOOLTIPINFOSLASH"] = function (arg)
+	if UIParameters.mainframeCreated and UIElements.mainframe:IsShown() then
+		UIElements.mainframe:Hide()
+	else		
+		OpenProfileUI()
+		UIParameters.mainframeCreated = true
+	end
+end
+
+function MoreTooltipInfo.TooltipLine(tooltip, info, infoType, textColor)
   local found = false
 
   -- Check if we already added to this tooltip. Happens on the talent frame
@@ -75,7 +108,9 @@ function MoreTooltipInfo.TooltipLine(tooltip, info, infoType)
   end
 
   if not found then
-    tooltip:AddDoubleLine(infoType, "|cffffffff" .. info)
+    local color = "ffffffff"
+    if textColor ~= nil then color = textColor end
+    tooltip:AddDoubleLine(infoType, "|c" .. color .. info)
     tooltip:Show()
   end
 end
@@ -162,8 +197,8 @@ end
 function MoreTooltipInfo.GetItemBonusID(itemSplit)
   local bonuses = {}
 
-  for index=1, itemSplit[13] do
-    bonuses[#bonuses + 1] = itemSplit[13 + index]
+  for index=1, itemSplit[UIParameters.OFFSET_BONUS_ID] do
+    bonuses[#bonuses + 1] = itemSplit[UIParameters.OFFSET_BONUS_ID + index]
   end
 
   if #bonuses > 0 then
@@ -188,8 +223,8 @@ function MoreTooltipInfo.GetGemBonuses(itemLink, index)
   local _, gemLink = GetItemGem(itemLink, index)
   if gemLink ~= nil then
     local gemSplit = MoreTooltipInfo.GetItemSplit(gemLink)
-    for index=1, gemSplit[13] do
-      bonuses[#bonuses + 1] = gemSplit[13 + index]
+    for index=1, gemSplit[UIParameters.OFFSET_BONUS_ID] do
+      bonuses[#bonuses + 1] = gemSplit[UIParameters.OFFSET_BONUS_ID + index]
     end
   end
 
@@ -206,8 +241,8 @@ function MoreTooltipInfo.getGemString(self,itemLink)
 
   local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
 
-  for gemOffset = 3, 6 do
-    local gemIndex = (gemOffset - 3) + 1
+  for gemOffset = UIParameters.OFFSET_GEM_ID_1, UIParameters.OFFSET_GEM_ID_4 do
+    local gemIndex = (gemOffset - UIParameters.OFFSET_GEM_ID_1) + 1
     if itemSplit[gemOffset] > 0 then
       local gemId = MoreTooltipInfo.GetGemItemID(itemLink, gemIndex)
       if gemId > 0 then
@@ -381,13 +416,21 @@ function MoreTooltipInfo.DPSTooltip(destination, itemLink, itemID, personnalData
       if profiles["trinket"][classID] == nil then return end
       if profiles["trinket"][classID][specID] == nil then return end
       for i, v in pairs(profiles["trinket"][classID][specID]) do
-        if v[itemID] and v[itemID][itemlevel] then
-          dps = MoreTooltipInfo.FormatSpace(v[itemID][itemlevel])
-          MoreTooltipInfo.TooltipLine(destination, dps, i)
+        if v["enable"] and v["data"] and v["data"][itemID] and v["data"][itemID][itemlevel] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][itemID][itemlevel])
+          MoreTooltipInfo.TooltipLine(destination, dps, i, v["color"])
         end
       end
     end
   end
+end
+
+function MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, enable, color, string) 
+  profiles[type][classID][specID][profileName] = {}
+  profiles[type][classID][specID][profileName]["enable"] = enable
+  profiles[type][classID][specID][profileName]["color"] = color
+  profiles[type][classID][specID][profileName]["data"] = data
+  profiles[type][classID][specID][profileName]["string"] = string
 end
 
 function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
@@ -411,35 +454,46 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   -- Split data into a table
   local dpsData = {strsplit("^",stringSplit[5])}
   
+  local data = {}
+  local type = ""
   if dpsData[1] == "trinket" then
-    -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999|[174500]125=123;130=456;135=789
-    -- MoreTooltipInfo:12:1:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999|[174500]125=123;130=456;135=789
-    if profiles["trinket"][classID] == nil then profiles["trinket"][classID] = {} end
-    if profiles["trinket"][classID][specID] == nil then profiles["trinket"][classID][specID] = {} end
-
-    if profiles["trinket"][classID][specID][profileName] ~= nil then print("exists") end
-    
-    local trinketData = {}
-    --trinketData[classID] = {}
-    --trinketData[classID][specID] = {}
+    type = "trinket"
+    -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999^[174500]125=123;130=456;135=789
+    if profiles[dpsData[1]][classID] == nil then profiles[dpsData[1]][classID] = {} end
+    if profiles[dpsData[1]][classID][specID] == nil then profiles[dpsData[1]][classID][specID] = {} end
 
     for i, v in ipairs(dpsData) do
       if i ~= 1 then -- 1 is the type
         local itemID,ilvlData = strsplit("]",v)
         itemID = tonumber(string.sub(itemID,2))
         if itemID then
-          --trinketData[classID][specID][itemID] = {}    
-          trinketData[itemID] = {}      
+          data[itemID] = {}       
           for _, w in ipairs({strsplit(";", ilvlData)}) do
             local ilvl,dps = strsplit("=",w)
-            --trinketData[classID][specID][tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
-            trinketData[tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
+            data[tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
           end
         end
       end
     end
-    profiles["trinket"][classID][specID][profileName] = trinketData;
   end
+
+  if profiles[dpsData[1]][classID][specID][profileName] ~= nil then 
+    local tempdata = {}
+    tempdata["type"] = type
+    tempdata["classID"] = classID
+    tempdata["specID"] = specID
+    tempdata["profileName"] = profileName
+    tempdata["data"] = data
+    tempdata["enable"] = true
+    tempdata["color"] = "ffffffff"
+    tempdata["string"] = value
+
+    StaticPopup_Show("MTI_CONFIRM_EXISTS_POPUP","","",tempdata)
+    
+    return false
+  end
+
+  MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, true, "ffffffff", value) 
 
   return true
 end
@@ -547,6 +601,268 @@ end
 -------------------
 -- Interface UI  --
 -------------------
+
+StaticPopupDialogs["MTI_CONFIRM_EXISTS_POPUP"] = {
+  text = "The profile %s already exists. Do you want to overwrite it?",
+
+  button1 = "Yes",
+  button2 = "No",
+  OnAccept = function(self, data, data2)
+    DeleteProfile(data["classID"],data["specID"],data["profileName"])
+    MoreTooltipInfo.NewProfile(data["type"], data["classID"], data["specID"], data["profileName"], data["data"], data["enable"], data["color"], data["string"])
+    OpenProfileUI()
+  end,
+  timeout = 0,
+  cancels = "MTI_IMPORT_POPUP",
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+StaticPopupDialogs["MTI_EXISTS_POPUP"] = {
+  text = "The profile %s already exists. ",
+  button1 = "Cancel",
+  timeout = 0,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+StaticPopupDialogs["MTI_RENAME_POPUP"] = {
+  text = "New profile name for %s?",
+
+  button1 = "Validate",
+  button2 = "Cancel",
+  OnShow = function (self, data)
+    self.editBox:SetText(UIParameters.currentProfile)
+  end,
+  OnAccept = function(self, data, data2)
+    if profiles["trinket"][UIParameters.currentClassID][UIParameters.currentSpecID][self.editBox:GetText()] ~= nil then   
+      StaticPopup_Show("MTI_EXISTS_POPUP",self.editBox:GetText())
+      return false
+    end
+    RenameProfile(UIParameters.currentClassID,UIParameters.currentSpecID,UIParameters.currentProfile,self.editBox:GetText())
+    OpenProfileUI()
+  end,
+  timeout = 0,
+  hasEditBox = true,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+StaticPopupDialogs["MTI_DELETE_POPUP"] = {
+  text = "Are you sure you want to delete the profile %s?",
+  button1 = "Yes",
+  button2 = "No",
+  OnAccept = function()
+    DeleteProfile(UIParameters.currentClassID,UIParameters.currentSpecID,UIParameters.currentProfile)
+    OpenProfileUI()
+  end,
+  timeout = 0,
+  showAlert = true,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+StaticPopupDialogs["MTI_IMPORT_POPUP"] = {
+  text = "New Profile",
+  button1 = "Validate",
+  button2 = "Cancel",
+  OnAccept = function(self, data, data2)
+    MoreTooltipInfo.ValidateItemPersonnalData("test",self.editBox:GetText())
+    OpenProfileUI()
+  end,
+  timeout = 0,
+  exclusive = true,
+  hasEditBox = true,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+function DrawOptionGroup(classID, specID, profileName)
+  if UIParameters.detailsLoaded then
+    if not UIParameters.detailsDrawn then
+      UIElements.mainframe:AddChild(UIElements.detailsGroup)
+      UIParameters.detailsDrawn = true
+    end
+    --print("draw "..classID.." "..specID.." "..profileName)
+    UIParameters.currentProfile = profileName
+    UIParameters.currentClassID = classID
+    UIParameters.currentSpecID = specID
+    UIElements.titleLabel:SetText(profileName)
+    UIElements.enablecheckbox:SetCallback("OnValueChanged", function(widget)
+      if profiles["trinket"][classID][specID][profileName]["enable"] then 
+        DisableProfile(classID, specID, profileName)
+      else
+        EnableProfile(classID, specID, profileName)
+      end
+    end)
+    UIElements.enablecheckbox:SetValue(profiles["trinket"][classID][specID][profileName]["enable"])
+  else
+    print("settings not loaded")
+  end
+end
+
+function RenameProfile(classID, specID, profileName, newName)
+  --TODO : check if name already exists
+  --print("rename "..classID.." "..specID.." "..profileName.." to "..newName)
+  profiles["trinket"][classID][specID][newName] = profiles["trinket"][classID][specID][profileName];
+  profiles["trinket"][classID][specID][profileName] = nil
+end
+
+function DeleteProfile(classID, specID, profileName)
+  --print("delete "..classID.." "..specID.." "..profileName)
+  profiles["trinket"][classID][specID][profileName] = nil
+end
+
+function EnableProfile(classID, specID, profileName)
+  --print("enable "..classID.." "..specID.." "..profileName)
+  profiles["trinket"][classID][specID][profileName]["enable"] = true
+end
+
+function SetColor(classID, specID, profileName, color)
+  --print("color "..classID.." "..specID.." "..profileName.." "..color)
+  profiles["trinket"][classID][specID][profileName]["color"] = color
+end
+
+function DisableProfile(classID, specID, profileName)
+  --print("disable "..classID.." "..specID.." "..profileName)
+  profiles["trinket"][classID][specID][profileName]["enable"] = false
+end
+
+function AddSpacer(targetFrame,full,width,height)
+	UIElements.spacerTable[#UIElements.spacerTable+1] = AGUI:Create("Label")
+	if full then
+		UIElements.spacerTable[#UIElements.spacerTable]:SetFullWidth(true)
+	else
+		if width<=1 then
+			UIElements.spacerTable[#UIElements.spacerTable]:SetRelativeWidth(width)
+		else
+			UIElements.spacerTable[#UIElements.spacerTable]:SetWidth(width)
+		end
+	end
+	if height then
+		UIElements.spacerTable[#UIElements.spacerTable]:SetHeight(height)
+	end
+	targetFrame:AddChild(UIElements.spacerTable[#UIElements.spacerTable])
+end
+
+function OpenProfileUI()
+  --Init Vars
+  UIParameters.detailsLoaded = false
+  UIParameters.detailsDrawn = false
+  UIParameters.currentProfile = ""
+  UIParameters.currentClassID = 0
+  UIParameters.currentSpecID = 0
+
+  --replace frame if already opened
+  if UIElements.mainframe and UIElements.mainframe:IsVisible() then
+    UIElements.mainframe:Release()
+  end
+  UIElements.mainframe = AGUI:Create("Frame")
+  UIElements.mainframe:SetTitle("MoreTooltipInfo")
+  UIElements.mainframe:SetPoint("CENTER")
+  UIElements.mainframe:SetCallback("OnClose", function(widget) 
+    if UIElements.mainframe:IsVisible() then
+      widget:Release()
+    end
+  end)
+  UIElements.mainframe:SetLayout("Flow")
+  UIElements.mainframe:SetWidth(700)
+  UIElements.mainframe:SetHeight(400)
+  
+  UIElements.mainGroup = AGUI:Create("SimpleGroup")
+  UIElements.mainGroup:SetLayout("Flow")
+  UIElements.mainGroup:SetRelativeWidth(0.3)
+  UIElements.mainGroup:SetFullHeight(true)
+  UIElements.mainframe:AddChild(UIElements.mainGroup)
+	
+	local scrollcontainer1 = AGUI:Create("SimpleGroup")
+  scrollcontainer1:SetRelativeWidth(1)
+  scrollcontainer1:SetFullHeight(true)
+	scrollcontainer1:SetLayout("Fill")
+	UIElements.mainGroup:AddChild(scrollcontainer1)
+	
+	UIElements.scroll1 = AGUI:Create("ScrollFrame")
+	UIElements.scroll1:SetLayout("Flow")
+  scrollcontainer1:AddChild(UIElements.scroll1)
+
+  UIElements.importButton = AGUI:Create("Button")
+  UIElements.importButton:SetText("Import")
+  UIElements.importButton:SetCallback("OnClick", function(widget)
+    StaticPopup_Show ("MTI_IMPORT_POPUP")
+  end)
+  UIElements.importButton:SetRelativeWidth(1)
+  UIElements.scroll1:AddChild(UIElements.importButton)
+
+  local profilesCount = 1
+  for k1, v1 in pairs(profiles["trinket"]) do
+    for k2, v2 in pairs(v1) do
+        --todo : manage when no profile in spec
+        local classLabel = AGUI:Create("InteractiveLabel")
+        classLabel:SetText(MoreTooltipInfo.SpecNames[k1]["name"] .. " - " .. MoreTooltipInfo.SpecNames[k1][k2])
+        local r,g,b = hex2rgb(MoreTooltipInfo.SpecNames[k1]["color"])
+        classLabel:SetColor(r/255,g/255,b/255)
+        classLabel:SetRelativeWidth(1)
+        UIElements.scroll1:AddChild(classLabel)
+      for k3, v3 in pairs(v2) do
+        UIElements.tableLabel[profilesCount] = AGUI:Create("InteractiveLabel")
+        UIElements.tableLabel[profilesCount]:SetText(k3)
+        UIElements.tableLabel[profilesCount]:SetRelativeWidth(1)
+        UIElements.tableLabel[profilesCount]:SetCallback("OnClick", function(widget)
+          UIParameters.currentProfile = k3
+          DrawOptionGroup(k1, k2, k3)
+        end)
+        UIElements.scroll1:AddChild(UIElements.tableLabel[profilesCount])
+        profilesCount = profilesCount + 1
+      end
+    end
+  end
+  
+  -- First load of the Details pannel
+  if not UIParameters.detailsLoaded then
+    UIElements.detailsGroup = AGUI:Create("SimpleGroup")
+    UIElements.detailsGroup:SetLayout("Flow")
+    UIElements.detailsGroup:SetRelativeWidth(0.7)
+
+    UIElements.titleLabel = AGUI:Create("Heading")
+    UIElements.titleLabel:SetText("")
+    UIElements.titleLabel:SetRelativeWidth(1)
+    UIElements.detailsGroup:AddChild(UIElements.titleLabel)
+
+    UIElements.renameButton = AGUI:Create("Button")
+    UIElements.renameButton:SetText("Rename")
+    UIElements.renameButton:SetCallback("OnClick", function(widget)
+      StaticPopup_Show ("MTI_RENAME_POPUP",UIParameters.currentProfile)
+    end)
+    UIElements.renameButton:SetRelativeWidth(0.5)
+    UIElements.detailsGroup:AddChild(UIElements.renameButton)
+
+    UIElements.deleteButton = AGUI:Create("Button")
+    UIElements.deleteButton:SetText("Delete")
+    UIElements.deleteButton:SetCallback("OnClick", function(widget)
+      print(StaticPopup_Show ("MTI_DELETE_POPUP",UIParameters.currentProfile))
+    end)
+    UIElements.deleteButton:SetRelativeWidth(0.5)
+    UIElements.detailsGroup:AddChild(UIElements.deleteButton)
+
+    UIElements.enablecheckbox = AGUI:Create("CheckBox")
+    UIElements.enablecheckbox:SetLabel("Enable")
+    UIElements.enablecheckbox:SetRelativeWidth(1)
+    UIElements.detailsGroup:AddChild(UIElements.enablecheckbox)
+
+--[[     UIElements.colorpicker = AGUI:Create("ColorPicker")
+    UIElements.colorpicker:SetLabel("Color")
+    UIElements.colorpicker:SetRelativeWidth(1)
+    UIElements.detailsGroup:AddChild(UIElements.colorpicker) ]]
+
+    UIParameters.detailsLoaded = true
+  end
+
+end
 
 function f:CreateOptions()
 	if self.optionsFrame then return end
@@ -679,19 +995,19 @@ function f:CreateOptions()
         args = {
           enableConduitID = {
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable ConduitsID" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable ConduitID" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
             order = 0,
           },
           enableConduitSpellID = {
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits SpellID" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduit SpellID" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
             order = 1,
           },
           enableConduitRank = {
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduits rank" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduit rank" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
             order = 2,
           },
@@ -706,20 +1022,17 @@ function f:CreateOptions()
 		get = function(info) return cfg[ info[#info] ] end,
 		set = function(info, value) cfg[ info[#info] ] = value; end,
 		args = {
-      enableItemDPS = {
-        type = "toggle",
-        name = NORMAL_FONT_COLOR_CODE .. "Enable Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
-        width = "full",
+      enableItemBaseDPS = {
         order = 0,
-      },
-      customdata = {
-        order = 1,
-        type = "input",
-        name = "Use custom item DPS",
+        type = "toggle",
+        name = NORMAL_FONT_COLOR_CODE .. "Enable Base Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
         width = "full",
-        get = function(info) return cfg[ info[#info] ] end,
-		    set = function(info, value) if MoreTooltipInfo.ValidateItemPersonnalData(info,value) then cfg[ info[#info] ] = value; end; end,
-        multiline = true,
+      },
+      customdataButton = {
+        order = 2,
+        type = "execute",
+        name = "Manage DPS profiles",
+        func = function(info) if InterfaceOptionsFrame:IsShown() then InterfaceOptionsFrame:Hide() end  OpenProfileUI() end,
       },
 		},
   }
@@ -770,4 +1083,103 @@ function f:ADDON_LOADED(event, addon)
     profiles = db.profiles
     self:CreateOptions()
   end
+end
+
+---------------------
+------- Data --------
+---------------------
+MoreTooltipInfo.SpecNames = {
+  [6] = {
+    ["name"] = "Death Knight",
+    ["color"] = "C41F3B",
+    [250] = 'Blood',
+    [251] = 'Frost',
+    [252] = 'Unholy',
+  },
+  [12] = {
+    ["name"] = "Demon Hunter",
+    ["color"] = "A330C9",
+    [577] = 'Havoc',
+    [581] = 'Vengeance',
+  },
+  [11] = {
+    ["name"] = "Druid",
+    ["color"] = "FF7D0A",
+    [102] = 'Balance',
+    [103] = 'Feral',
+    [104] = 'Guardian',
+    [105] = 'Restoration',
+  },
+  [3] = {
+    ["name"] = "Hunter",
+    ["color"] = "A9D271",
+    [253] = 'Beast Mastery',
+    [254] = 'Marksmanship',
+    [255] = 'Survival',
+  },
+  [8] = {
+    ["name"] = "Mage",
+    ["color"] = "40C7EB",
+    [62] = 'Arcane',
+    [63] = 'Fire',
+    [64] = 'Frost',
+  },
+  [10] = {
+    ["name"] = "Monk",
+    ["color"] = "00FF96",
+    [268] = 'Brewmaster',
+    [269] = 'Windwalker',
+    [270] = 'Mistweaver',
+  },
+  [2] = {
+    ["name"] = "Paladin",
+    ["color"] = "F58CBA",
+    [65] = 'Holy',
+    [66] = 'Protection',
+    [70] = 'Retribution',
+  },
+  [5] = {
+    ["name"] = "Priest",
+    ["color"] = "FFFFFF",
+    [256] = 'Discipline',
+    [257] = 'Holy',
+    [258] = 'Shadow',
+  },
+  [4] = {
+    ["name"] = "Rogue",
+    ["color"] = "FFF569",
+    [259] = 'Assassination',
+    [260] = 'Outlaw',
+    [261] = 'Subtlety',
+  },
+  [12] = {
+    ["name"] = "Shaman",
+    ["color"] = "0070DE",
+    [262] = 'Elemental',
+    [263] = 'Enhancement',
+    [264] = 'Restoration',
+  },
+  [9] = {
+    ["name"] = "Warlock",
+    ["color"] = "8787ED",
+    [265] = 'Affliction',
+    [266] = 'Demonology',
+    [267] = 'Destruction',
+  },
+  [1] = {
+    ["name"] = "Warrior",
+    ["color"] = "C79C6E",
+    [71] = 'Arms',
+    [72] = 'Fury',
+    [73] = 'Protection'
+  },
+}
+
+---------------------
+------- Util --------
+---------------------
+
+function hex2rgb(hex)
+  hex = hex:gsub("#","")
+  return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
 end
