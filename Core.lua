@@ -707,7 +707,6 @@ function DrawOptionGroup(classID, specID, profileName)
 end
 
 function RenameProfile(classID, specID, profileName, newName)
-  --TODO : check if name already exists
   --print("rename "..classID.." "..specID.." "..profileName.." to "..newName)
   profiles["trinket"][classID][specID][newName] = profiles["trinket"][classID][specID][profileName];
   profiles["trinket"][classID][specID][profileName] = nil
@@ -716,6 +715,28 @@ end
 function DeleteProfile(classID, specID, profileName)
   --print("delete "..classID.." "..specID.." "..profileName)
   profiles["trinket"][classID][specID][profileName] = nil
+
+  --clean Empty tables
+  local profilesCountClass = 0
+  local profilesCountSpec = 0
+  for k1, v1 in pairs(profiles["trinket"]) do
+    profilesCountClass = 0
+    for k2, v2 in pairs(v1) do
+      profilesCountSpec = 0
+      for k3, v3 in pairs(v2) do
+        profilesCountClass = profilesCountClass + 1
+        profilesCountSpec = profilesCountSpec + 1
+      end
+
+      if profilesCountSpec == 0 then
+        profiles["trinket"][k1][k2] = nil
+      end
+    end
+
+    if profilesCountClass == 0 then
+      profiles["trinket"][k1] = nil
+    end
+  end
 end
 
 function EnableProfile(classID, specID, profileName)
@@ -801,7 +822,6 @@ function OpenProfileUI()
   local profilesCount = 1
   for k1, v1 in pairs(profiles["trinket"]) do
     for k2, v2 in pairs(v1) do
-        --todo : manage when no profile in spec
         local classLabel = AGUI:Create("InteractiveLabel")
         classLabel:SetText(MoreTooltipInfo.SpecNames[k1]["name"] .. " - " .. MoreTooltipInfo.SpecNames[k1][k2])
         local r,g,b = hex2rgb(MoreTooltipInfo.SpecNames[k1]["color"])
