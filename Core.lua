@@ -106,7 +106,6 @@ function MoreTooltipInfo.TooltipLine(tooltip, info, infoType, textColor)
       break 
     end
   end
-
   if not found then
     local color = "ffffffff"
     if textColor ~= nil then color = textColor end
@@ -425,6 +424,10 @@ function MoreTooltipInfo.DPSTooltip(destination, itemLink, itemID, personnalData
   end
 end
 
+function MoreTooltipInfo.GetDefaultColor(classID)
+  return MoreTooltipInfo.SpecNames[classID]["color"]
+end
+
 function MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, enable, color, string) 
   profiles[type][classID][specID][profileName] = {}
   profiles[type][classID][specID][profileName]["enable"] = enable
@@ -456,6 +459,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   
   local data = {}
   local type = ""
+  local color = MoreTooltipInfo.GetDefaultColor(classID) .. "ff" --add alpha at the end
   if dpsData[1] == "trinket" then
     type = "trinket"
     -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999^[174500]125=123;130=456;135=789
@@ -485,7 +489,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
     tempdata["profileName"] = profileName
     tempdata["data"] = data
     tempdata["enable"] = true
-    tempdata["color"] = "ffffffff"
+    tempdata["color"] = color
     tempdata["string"] = value
 
     StaticPopup_Show("MTI_CONFIRM_EXISTS_POPUP","","",tempdata)
@@ -493,7 +497,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
     return false
   end
 
-  MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, true, "ffffffff", value) 
+  MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, true, color, value) 
 
   return true
 end
@@ -1111,20 +1115,20 @@ end
 MoreTooltipInfo.SpecNames = {
   [6] = {
     ["name"] = "Death Knight",
-    ["color"] = "C41F3B",
+    ["color"] = "c41f3b",
     [250] = 'Blood',
     [251] = 'Frost',
     [252] = 'Unholy',
   },
   [12] = {
     ["name"] = "Demon Hunter",
-    ["color"] = "A330C9",
+    ["color"] = "a330c9",
     [577] = 'Havoc',
     [581] = 'Vengeance',
   },
   [11] = {
     ["name"] = "Druid",
-    ["color"] = "FF7D0A",
+    ["color"] = "ff7d0a",
     [102] = 'Balance',
     [103] = 'Feral',
     [104] = 'Guardian',
@@ -1132,63 +1136,63 @@ MoreTooltipInfo.SpecNames = {
   },
   [3] = {
     ["name"] = "Hunter",
-    ["color"] = "A9D271",
+    ["color"] = "a9d271",
     [253] = 'Beast Mastery',
     [254] = 'Marksmanship',
     [255] = 'Survival',
   },
   [8] = {
     ["name"] = "Mage",
-    ["color"] = "40C7EB",
+    ["color"] = "40c7eb",
     [62] = 'Arcane',
     [63] = 'Fire',
     [64] = 'Frost',
   },
   [10] = {
     ["name"] = "Monk",
-    ["color"] = "00FF96",
+    ["color"] = "00ff96",
     [268] = 'Brewmaster',
     [269] = 'Windwalker',
     [270] = 'Mistweaver',
   },
   [2] = {
     ["name"] = "Paladin",
-    ["color"] = "F58CBA",
+    ["color"] = "f58cba",
     [65] = 'Holy',
     [66] = 'Protection',
     [70] = 'Retribution',
   },
   [5] = {
     ["name"] = "Priest",
-    ["color"] = "FFFFFF",
+    ["color"] = "ffffff",
     [256] = 'Discipline',
     [257] = 'Holy',
     [258] = 'Shadow',
   },
   [4] = {
     ["name"] = "Rogue",
-    ["color"] = "FFF569",
+    ["color"] = "fff569",
     [259] = 'Assassination',
     [260] = 'Outlaw',
     [261] = 'Subtlety',
   },
   [12] = {
     ["name"] = "Shaman",
-    ["color"] = "0070DE",
+    ["color"] = "0070de",
     [262] = 'Elemental',
     [263] = 'Enhancement',
     [264] = 'Restoration',
   },
   [9] = {
     ["name"] = "Warlock",
-    ["color"] = "8787ED",
+    ["color"] = "8787ed",
     [265] = 'Affliction',
     [266] = 'Demonology',
     [267] = 'Destruction',
   },
   [1] = {
     ["name"] = "Warrior",
-    ["color"] = "C79C6E",
+    ["color"] = "c79c6e",
     [71] = 'Arms',
     [72] = 'Fury',
     [73] = 'Protection'

@@ -39,8 +39,6 @@ If there is hotfixes in game, you will just have to update the addon to get the 
 - Add more data to the addon
   - Spell TickTime
 
-- Import personnal data for item dps
-
 - Add notifications when data changes
 
 - Cleanup and make all that data available through a Lib
