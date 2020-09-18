@@ -1,4 +1,4 @@
-v2.0.0 xx/xx/2020
+v2.0.0 09/18/2020
 [All] Shadowland availability
 [All] Rename addon to MoreTooltipInfo
 [UI] Add conduit spellID and rank
