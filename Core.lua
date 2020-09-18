@@ -705,6 +705,8 @@ function DrawOptionGroup(classID, specID, profileName)
       end
     end)
     UIElements.enablecheckbox:SetValue(profiles["trinket"][classID][specID][profileName]["enable"])
+    local r,g,b = hex2rgb(profiles["trinket"][classID][specID][profileName]["color"])
+    UIElements.colorpicker:SetColor(r/255,g/255,b/255,1)
   else
     print("settings not loaded")
   end
@@ -868,7 +870,7 @@ function OpenProfileUI()
     UIElements.deleteButton = AGUI:Create("Button")
     UIElements.deleteButton:SetText("Delete")
     UIElements.deleteButton:SetCallback("OnClick", function(widget)
-      print(StaticPopup_Show ("MTI_DELETE_POPUP",UIParameters.currentProfile))
+      StaticPopup_Show ("MTI_DELETE_POPUP",UIParameters.currentProfile)
     end)
     UIElements.deleteButton:SetRelativeWidth(0.5)
     UIElements.detailsGroup:AddChild(UIElements.deleteButton)
@@ -878,10 +880,14 @@ function OpenProfileUI()
     UIElements.enablecheckbox:SetRelativeWidth(1)
     UIElements.detailsGroup:AddChild(UIElements.enablecheckbox)
 
---[[     UIElements.colorpicker = AGUI:Create("ColorPicker")
+    UIElements.colorpicker = AGUI:Create("ColorPicker")
     UIElements.colorpicker:SetLabel("Color")
     UIElements.colorpicker:SetRelativeWidth(1)
-    UIElements.detailsGroup:AddChild(UIElements.colorpicker) ]]
+    UIElements.colorpicker:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
+      local newColor = rgb2hex(r*255,g*255,b*255) .. "ff"
+      SetColor(UIParameters.currentClassID,UIParameters.currentSpecID,UIParameters.currentProfile,newColor)
+    end)
+    UIElements.detailsGroup:AddChild(UIElements.colorpicker)
 
     UIParameters.detailsLoaded = true
   end
@@ -1204,6 +1210,17 @@ MoreTooltipInfo.SpecNames = {
 ---------------------
 
 function hex2rgb(hex)
-  hex = hex:gsub("#","")
   return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
+end
+
+function rgb2hex(r, g, b)
+  local r_h, g_h, b_h
+  r_h = string.format("%x", r)
+  if #r_h < 2 then r_h = "0" .. r_h end
+  g_h = string.format("%x", g)
+  if #g_h < 2 then g_h = "0" .. g_h end
+  b_h = string.format("%x", b)
+  if #b_h < 2 then b_h = "0" .. b_h end
+
+  return r_h .. g_h .. b_h
 end
