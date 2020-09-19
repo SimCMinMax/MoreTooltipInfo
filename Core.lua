@@ -21,6 +21,7 @@ local charDefaults = {
   enableSpellID = true,
   enableSpellRPPM = true,
   enableSpellGCD = true,
+  enableSpellTalentID = true,
   enableItemID = true,
   enableItemSpellID = true,
   enableItemRPPM = true,
@@ -30,7 +31,8 @@ local charDefaults = {
   enableItemEnchantSpellID = true,
   enableItemEnchantSpellRPPM = true,
   enableBaseItemDPS = true,
-  enablePersonnalItemDPS = true,
+  enableBaseTalentDPS = true,
+  enableBestTalentDPS = true,
   enableSoulbindID = true,
   enableConduitID = true,
   enableConduitSpellID = true,
@@ -39,7 +41,9 @@ local charDefaults = {
 local profileDefaults = { 
   trinket = {},
   soulbind={},
-  conduit={}
+  conduit={},
+  legendary={},
+  talent={}
 }
 local UIElements={
   mainframe,
@@ -72,6 +76,7 @@ local UIParameters={
   detailsDrawn=false,
   mainframeCreated=false,
   currentProfile="",
+  currentType="",
   currentClassID=0,
   currentSpecID=0,
 }
@@ -401,24 +406,54 @@ function MoreTooltipInfo.GCDTooltip(destination, spellID)
   end
 end
 
-function MoreTooltipInfo.DPSTooltip(destination, itemLink, itemID, personnalData)
+function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnalData)
   if itemID then
-    if not personnalData then
-      local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
-      if dps then
-        MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
-      end
-    else --check profiles
-      local specID = MoreTooltipInfo.GetSpecID()
-      local classID = MoreTooltipInfo.GetClassID()
-      local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
-      if profiles["trinket"][classID] == nil then return end
-      if profiles["trinket"][classID][specID] == nil then return end
-      for i, v in pairs(profiles["trinket"][classID][specID]) do
-        if v["enable"] and v["data"] and v["data"][itemID] and v["data"][itemID][itemlevel] then
-          dps = MoreTooltipInfo.FormatSpace(v["data"][itemID][itemlevel])
-          MoreTooltipInfo.TooltipLine(destination, dps, i, v["color"])
+    local _, _, itemRarity, _, _, _, _, _, itemEquipLoc, _, _ = GetItemInfo(itemLink)
+    local InfoType
+    local specID = MoreTooltipInfo.GetSpecID()
+    local classID = MoreTooltipInfo.GetClassID()
+
+    if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
+      InfoType = "trinket"
+      if not personnalData then
+        local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
+        if dps then
+          MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
         end
+      else --check profiles
+        
+        local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
+        if profiles[InfoType][classID] == nil then return end
+        if profiles[InfoType][classID][specID] == nil then return end
+        for i, v in pairs(profiles[InfoType][classID][specID]) do
+          if v["enable"] and v["data"] and v["data"][itemID] and v["data"][itemID][itemlevel] then
+            dps = MoreTooltipInfo.FormatSpace(v["data"][itemID][itemlevel])
+            MoreTooltipInfo.TooltipLine(destination, dps, i, v["color"])
+          end
+        end
+      end
+    elseif itemRarity == 5 then --legendaries
+      InfoType = "legendary"
+    end
+  end
+end
+
+function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, personnalData)
+  if spellID then
+    local InfoType = "talent"
+    local specID = MoreTooltipInfo.GetSpecID()
+    local classID = MoreTooltipInfo.GetClassID()
+
+    if profiles[InfoType][classID] == nil then return end
+    if profiles[InfoType][classID][specID] == nil then return end
+    for i, v in pairs(profiles[InfoType][classID][specID]) do
+      if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Base"] then
+        dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Base"])
+        MoreTooltipInfo.TooltipLine(destination, dps, i.." Base", v["color"])
+      end
+      if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Best"] then
+        dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Best"])
+        MoreTooltipInfo.TooltipLine(destination, dps, i.." Best", v["color"])
       end
     end
   end
@@ -458,32 +493,51 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   local dpsData = {strsplit("^",stringSplit[5])}
   
   local data = {}
-  local type = ""
+  local infoType = ""
   local color = MoreTooltipInfo.GetDefaultColor(classID) .. "ff" --add alpha at the end
   if dpsData[1] == "trinket" then
-    type = "trinket"
+    infoType = "trinket"
     -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999^[174500]125=123;130=456;135=789
-    if profiles[dpsData[1]][classID] == nil then profiles[dpsData[1]][classID] = {} end
-    if profiles[dpsData[1]][classID][specID] == nil then profiles[dpsData[1]][classID][specID] = {} end
+    if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
+    if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
 
     for i, v in ipairs(dpsData) do
       if i ~= 1 then -- 1 is the type
-        local itemID,ilvlData = strsplit("]",v)
-        itemID = tonumber(string.sub(itemID,2))
+        local itemID, dpsData = strsplit("]",v)
+        itemID = tonumber(string.sub(itemID,2))--remove the first[
         if itemID then
           data[itemID] = {}       
-          for _, w in ipairs({strsplit(";", ilvlData)}) do
+          for _, w in ipairs({strsplit(";", dpsData)}) do
             local ilvl,dps = strsplit("=",w)
             data[tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
           end
         end
       end
     end
+  elseif dpsData[1] == "talent" then
+    infoType = "talent"
+    --MoreTooltipInfo:8:64:\"X.com-patchwerk\":talent^[56377]Base=1234;Best=9999^[153595]Base=5678;Best=8888
+    if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
+    if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
+
+    for i, v in ipairs(dpsData) do
+      if i ~= 1 then -- 1 is the type
+        local talentID, dpsData = strsplit("]",v)
+        talentID = tonumber(string.sub(talentID,2))--remove the first[
+        if talentID then
+          data[talentID] = {}       
+          for _, w in ipairs({strsplit(";", dpsData)}) do
+            local talentType,dps = strsplit("=",w)
+            data[tonumber(talentID)][talentType] = tonumber(dps)
+          end
+        end
+      end
+    end
   end
 
-  if profiles[dpsData[1]][classID][specID][profileName] ~= nil then 
+  if profiles[infoType][classID][specID][profileName] ~= nil then 
     local tempdata = {}
-    tempdata["type"] = type
+    tempdata["type"] = infoType
     tempdata["classID"] = classID
     tempdata["specID"] = specID
     tempdata["profileName"] = profileName
@@ -497,7 +551,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
     return false
   end
 
-  MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, true, color, value) 
+  MoreTooltipInfo.NewProfile(infoType, classID, specID, profileName, data, true, color, value) 
 
   return true
 end
@@ -540,17 +594,19 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
         if cfg.enableItemRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
       end    
 
-      if cfg.enableBaseItemDPS then MoreTooltipInfo.DPSTooltip(self, itemLink, itemID, false) end
-      if cfg.enablePersonnalItemDPS then MoreTooltipInfo.DPSTooltip(self, itemLink, itemID, true) end
+      if cfg.enableBaseItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, false) end
+      MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, true)
     end
   end
 end
 
 function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   local spellID
+  local talentID = 0
   
   if option == "default" then
     spellID = select(2, self:GetSpell())
+    --Todo : disable when in talent tooltip to let the talent part manage itself
   elseif option == "aura" then
     spellID = select(10, UnitAura(...))
   elseif option == "buff" then
@@ -560,7 +616,10 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "conduit" then
     local conduitID = select(1, ...)
     --get spell id from game file
-    spellID = MoreTooltipInfo.GetConduitSpellID(select(1, ...))   
+    spellID = MoreTooltipInfo.GetConduitSpellID(select(1, ...))  
+  elseif option == "talent" then
+    talentID = select(1, ...)
+    spellID = select(6, GetTalentInfoByID(talentID)) 
   elseif option == "ref" then
     spellID = MoreTooltipInfo.GetIDFromLink("spell", self)
     self = ItemRefTooltip
@@ -576,6 +635,10 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
       if cfg.enableConduitID then MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID") end
       if cfg.enableConduitRank then MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank") end
       if cfg.enableConduitSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "ConduitSpellID") end
+    end
+    if talentID > 0 then
+      if cfg.enableSpellTalentID then MoreTooltipInfo.TooltipLine(self, talentID, "TalentID") end
+      MoreTooltipInfo.SpellDPSTooltip(self, spellID, true)
     end
   end
 end
@@ -641,7 +704,7 @@ StaticPopupDialogs["MTI_RENAME_POPUP"] = {
     self.editBox:SetText(UIParameters.currentProfile)
   end,
   OnAccept = function(self, data, data2)
-    if profiles["trinket"][UIParameters.currentClassID][UIParameters.currentSpecID][self.editBox:GetText()] ~= nil then   
+    if profiles[UIParameters.currentType][UIParameters.currentClassID][UIParameters.currentSpecID][self.editBox:GetText()] ~= nil then   
       StaticPopup_Show("MTI_EXISTS_POPUP",self.editBox:GetText())
       return false
     end
@@ -698,14 +761,14 @@ function DrawOptionGroup(classID, specID, profileName)
     UIParameters.currentSpecID = specID
     UIElements.titleLabel:SetText(profileName)
     UIElements.enablecheckbox:SetCallback("OnValueChanged", function(widget)
-      if profiles["trinket"][classID][specID][profileName]["enable"] then 
+      if profiles[UIParameters.currentType][classID][specID][profileName]["enable"] then 
         DisableProfile(classID, specID, profileName)
       else
         EnableProfile(classID, specID, profileName)
       end
     end)
-    UIElements.enablecheckbox:SetValue(profiles["trinket"][classID][specID][profileName]["enable"])
-    local r,g,b = hex2rgb(profiles["trinket"][classID][specID][profileName]["color"])
+    UIElements.enablecheckbox:SetValue(profiles[UIParameters.currentType][classID][specID][profileName]["enable"])
+    local r,g,b = hex2rgb(profiles[UIParameters.currentType][classID][specID][profileName]["color"])
     UIElements.colorpicker:SetColor(r/255,g/255,b/255,1)
   else
     print("settings not loaded")
@@ -714,18 +777,18 @@ end
 
 function RenameProfile(classID, specID, profileName, newName)
   --print("rename "..classID.." "..specID.." "..profileName.." to "..newName)
-  profiles["trinket"][classID][specID][newName] = profiles["trinket"][classID][specID][profileName];
-  profiles["trinket"][classID][specID][profileName] = nil
+  profiles[UIParameters.currentType][classID][specID][newName] = profiles[UIParameters.currentType][classID][specID][profileName];
+  profiles[UIParameters.currentType][classID][specID][profileName] = nil
 end
 
 function DeleteProfile(classID, specID, profileName)
   --print("delete "..classID.." "..specID.." "..profileName)
-  profiles["trinket"][classID][specID][profileName] = nil
+  profiles[UIParameters.currentType][classID][specID][profileName] = nil
 
   --clean Empty tables
   local profilesCountClass = 0
   local profilesCountSpec = 0
-  for k1, v1 in pairs(profiles["trinket"]) do
+  for k1, v1 in pairs(profiles[UIParameters.currentType]) do
     profilesCountClass = 0
     for k2, v2 in pairs(v1) do
       profilesCountSpec = 0
@@ -735,29 +798,29 @@ function DeleteProfile(classID, specID, profileName)
       end
 
       if profilesCountSpec == 0 then
-        profiles["trinket"][k1][k2] = nil
+        profiles[UIParameters.currentType][k1][k2] = nil
       end
     end
 
     if profilesCountClass == 0 then
-      profiles["trinket"][k1] = nil
+      profiles[UIParameters.currentType][k1] = nil
     end
   end
 end
 
 function EnableProfile(classID, specID, profileName)
   --print("enable "..classID.." "..specID.." "..profileName)
-  profiles["trinket"][classID][specID][profileName]["enable"] = true
+  profiles[UIParameters.currentType][classID][specID][profileName]["enable"] = true
 end
 
-function SetColor(classID, specID, profileName, color)
+function SetProfileColor(classID, specID, profileName, color)
   --print("color "..classID.." "..specID.." "..profileName.." "..color)
-  profiles["trinket"][classID][specID][profileName]["color"] = color
+  profiles[UIParameters.currentType][classID][specID][profileName]["color"] = color
 end
 
 function DisableProfile(classID, specID, profileName)
   --print("disable "..classID.." "..specID.." "..profileName)
-  profiles["trinket"][classID][specID][profileName]["enable"] = false
+  profiles[UIParameters.currentType][classID][specID][profileName]["enable"] = false
 end
 
 function AddSpacer(targetFrame,full,width,height)
@@ -784,6 +847,9 @@ function OpenProfileUI()
   UIParameters.currentProfile = ""
   UIParameters.currentClassID = 0
   UIParameters.currentSpecID = 0
+
+  --temp only trinkets
+  UIParameters.currentType = "talent"
 
   --replace frame if already opened
   if UIElements.mainframe and UIElements.mainframe:IsVisible() then
@@ -885,7 +951,7 @@ function OpenProfileUI()
     UIElements.colorpicker:SetRelativeWidth(1)
     UIElements.colorpicker:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
       local newColor = rgb2hex(r*255,g*255,b*255) .. "ff"
-      SetColor(UIParameters.currentClassID,UIParameters.currentSpecID,UIParameters.currentProfile,newColor)
+      SetProfileColor(UIParameters.currentClassID,UIParameters.currentSpecID,UIParameters.currentProfile,newColor)
     end)
     UIElements.detailsGroup:AddChild(UIElements.colorpicker)
 
@@ -1003,11 +1069,25 @@ function f:CreateOptions()
           },
         },
       },
+      gTalent = {
+        type = "group",
+        name = "Talents",
+        inline = true,
+        order = 2,
+        args = {
+          enableSpellTalentID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Talent ID" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+            order = 0,
+          },
+        },
+      },
       gSoulbind = {
         type = "group",
         name = "Soulbinds",
         inline = true,
-        order = 2,
+        order = 3,
         args = {
           enableSoulbindID = {
             type = "toggle",
@@ -1021,7 +1101,7 @@ function f:CreateOptions()
         type = "group",
         name = "Conduits",
         inline = true,
-        order = 3,
+        order = 4,
         args = {
           enableConduitID = {
             type = "toggle",
@@ -1045,35 +1125,63 @@ function f:CreateOptions()
       },
 		},
   }
-  local itemDPSPanel = {
+  local DPSPanel = {
 		type = "group",
-		name = "Item DPS options",
+		name = "DPS options",
 		order = 103,
 		get = function(info) return cfg[ info[#info] ] end,
 		set = function(info, value) cfg[ info[#info] ] = value; end,
 		args = {
-      enableItemBaseDPS = {
-        order = 0,
-        type = "toggle",
-        name = NORMAL_FONT_COLOR_CODE .. "Enable Base Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
-        width = "full",
-      },
       customdataButton = {
-        order = 2,
+        order = 0,
         type = "execute",
         name = "Manage DPS profiles",
         func = function(info) if InterfaceOptionsFrame:IsShown() then InterfaceOptionsFrame:Hide() end  OpenProfileUI() end,
+      },
+      gItems = {
+        type = "group",
+        name = "Items",
+        inline = true,
+        order = 1,
+        args = {
+          enableBaseItemDPS = {
+            order = 1,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Base Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+        },
+      },
+      gTalents = {
+        type = "group",
+        name = "Talents",
+        inline = true,
+        order = 2,
+        args = {
+          enableBaseTalentDPS = {
+            order = 0,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Base talent Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+          enableBestTalentDPS = {
+            order = 1,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Best talent Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+        },
       },
 		},
   }
 
   self.optionsFrame = ACD:AddToBlizOptions(addonName, addonName["MoreTooltipInfo"])
 	self.optionsFrame = ACD:AddToBlizOptions("Tooltip options", addonName["TooltipOptions"], addonName)
-	self.optionsFrame = ACD:AddToBlizOptions("Item DPS", addonName["ItemDPS"], addonName)
+	self.optionsFrame = ACD:AddToBlizOptions("DPS", addonName["DPS"], addonName)
 
   ACR:RegisterOptionsTable(addonName, mainPanel, false)
 	ACR:RegisterOptionsTable("Tooltip options", tooltipPanel, false)
-  ACR:RegisterOptionsTable("Item DPS", itemDPSPanel, false)
+  ACR:RegisterOptionsTable("DPS", DPSPanel, false)
 end
 
 -------------------
@@ -1086,6 +1194,7 @@ hooksecurefunc(GameTooltip, "SetUnitBuff", function (...) MoreTooltipInfo.Manage
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function (...) MoreTooltipInfo.ManageTooltips("spell", "debuff", ...) end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function (...) MoreTooltipInfo.ManageTooltips("spell", "aura", ...) end)
 hooksecurefunc(GameTooltip, "SetConduit", function (...) MoreTooltipInfo.ManageTooltips("spell", "conduit", ...) end)
+hooksecurefunc(GameTooltip, "SetTalent", function(...) MoreTooltipInfo.ManageTooltips("spell", "talent", ...) end)
 hooksecurefunc("SetItemRef", function (...) MoreTooltipInfo.ManageTooltips("spell", "ref", ...) end)
 
 -- Items
