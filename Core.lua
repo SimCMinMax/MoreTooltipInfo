@@ -57,6 +57,7 @@ local UIElements={
   renameButton,
   deleteButton,
   importButton,
+  typeDropdown,
   enablecheckbox,
   colorpicker,
 }
@@ -76,9 +77,14 @@ local UIParameters={
   detailsDrawn=false,
   mainframeCreated=false,
   currentProfile="",
-  currentType="",
+  currentType="trinket",
+  currentTypeIndex=1,
   currentClassID=0,
   currentSpecID=0,
+  availableOption = {
+		[1] = "trinket",
+		[2] = "talent"
+  }
 }
 
 local f = CreateFrame("Frame")
@@ -848,9 +854,6 @@ function OpenProfileUI()
   UIParameters.currentClassID = 0
   UIParameters.currentSpecID = 0
 
-  --temp only trinkets
-  UIParameters.currentType = "talent"
-
   --replace frame if already opened
   if UIElements.mainframe and UIElements.mainframe:IsVisible() then
     UIElements.mainframe:Release()
@@ -891,8 +894,19 @@ function OpenProfileUI()
   UIElements.importButton:SetRelativeWidth(1)
   UIElements.scroll1:AddChild(UIElements.importButton)
 
+  UIElements.typeDropdown = AGUI:Create("Dropdown")
+  UIElements.typeDropdown:SetList(UIParameters.availableOption)
+  UIElements.typeDropdown:SetValue(UIParameters.currentTypeIndex)
+  UIElements.typeDropdown:SetCallback("OnValueChanged", function (this, event, item)
+    UIParameters.currentTypeIndex = item
+		UIParameters.currentType=UIParameters.availableOption[item]
+		OpenProfileUI()
+  end)
+  UIElements.typeDropdown:SetRelativeWidth(1)
+  UIElements.scroll1:AddChild(UIElements.typeDropdown)
+
   local profilesCount = 1
-  for k1, v1 in pairs(profiles["trinket"]) do
+  for k1, v1 in pairs(profiles[UIParameters.currentType]) do
     for k2, v2 in pairs(v1) do
         local classLabel = AGUI:Create("InteractiveLabel")
         classLabel:SetText(MoreTooltipInfo.SpecNames[k1]["name"] .. " - " .. MoreTooltipInfo.SpecNames[k1][k2])
