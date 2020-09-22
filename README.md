@@ -18,6 +18,7 @@ For item DPS, there is base data coming from simulations from [bloodmallet.com](
 
 You can also import your own profile to better match your char. Open profile manager with `/mti`.
 
+**Trinket DPS**
 Format for item dps data is as follow :
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":trinket^[item_id1]ilvl1=dps1;ilvl2=dps2;ilvl3=dps3^[item_id2]ilvl4=dps4;ilvl5=dps5;ilvl6=dps6
@@ -28,6 +29,7 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":trinket^[174103]115=111;125=1234;130=1250;150=9999^[174500]115=111;125=123;130=456;135=789
 ```
 
+**Talent DPS**
 Format for talent dps data is as follow (base_dps is for talent alone, best_dps is with the best talent combination):
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":talent^[spellID]Base=base_dps;Best=best_dps^[spellID2]Base=base_dps2;Best=best_dps2
@@ -38,6 +40,7 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":talent^[56377]Base=1234;Best=9999^[153595]Base=5678;Best=8888
 ```
 
+**Soulbind DPS**
 Format for soulbind dps data is as follow (base_dps is for soulbind alone, best_dps is with the best soulbind combination):
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":soulbind^[spellID]Base=base_dps;Best=best_dps^[spellID]Base=base_dps;Best=best_dps
@@ -48,6 +51,7 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":soulbind^[331584]Base=111;Best=222^[331586]Base=333;Best=444
 ```
 
+**Conduit DPS**
 Format for conduit dps data is as follow:
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":conduit^[spellID]conduit_rank=dps1;conduit_rank2=dps2^[spellID]conduit_rank=dps3;conduit_rank2=dps4
@@ -58,6 +62,7 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":conduit^[336569]1=111;2=222^[336522]1=333;2=444
 ```
 
+**Legendary DPS**
 Format for legendary dps data is as follow:
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":legendary^[bonusID]dps^[bonusID2]dps2
