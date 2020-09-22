@@ -1274,20 +1274,20 @@ function f:CreateOptions()
       },
       gSoulbinds = {
         type = "group",
-        name = "Talents",
+        name = "Soulbinds",
         inline = true,
         order = 2,
         args = {
           enableSoulbindBaseDPS = {
-            order = 0,
+            order = 1,
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Soulbinds Base Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Base Soulbinds Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
           enableSoulbindBestDPS = {
             order = 1,
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Soulbinds Best Simulated DPS (with the best soulbinds combination)" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Best Soulbinds Simulated DPS (with the best soulbinds combination)" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
           enableConduitDPS = {
