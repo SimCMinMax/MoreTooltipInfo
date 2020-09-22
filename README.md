@@ -105,7 +105,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":legendary^[6830]111^[7104]666
 You can enable and disable what you want to show in the tooltip in Game Menu > Interface > MoreTooltipInfo
  
 ## Known issues and development plan
-- Add Legendary simulated DPS
+- Fix talent data divided in two parts
 
 - Add more data to the addon (Do not hesitate to suggest)
 
