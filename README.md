@@ -68,7 +68,6 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":legendary^[6830]111^[7104]666
 ```
 
-
 ## Currently available data
 - Spell:
   - ID
@@ -84,6 +83,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":legendary^[6830]111^[7104]666
   - enchant spellID
   - enchant RPPM
   - Simulated DPS (trinket)
+  - Simulated DPS (legendaries)
 - Talent:
   - Talent ID
   - Simulated DPS
