@@ -31,12 +31,17 @@ local charDefaults = {
   enableItemEnchantSpellID = true,
   enableItemEnchantSpellRPPM = true,
   enableBaseItemDPS = true,
+  enablePersonnalItemDPS = true,
+  enableLegendaryItemDPS = true,
   enableBaseTalentDPS = true,
   enableBestTalentDPS = true,
   enableSoulbindID = true,
+  enableSoulbindBaseDPS = true,
+  enableSoulbindBestDPS = true,
   enableConduitID = true,
   enableConduitSpellID = true,
-  enableConduitRank = true
+  enableConduitRank = true,
+  enableConduitDPS = true
 }
 local profileDefaults = { 
   trinket = {},
@@ -83,7 +88,9 @@ local UIParameters={
   currentSpecID=0,
   availableOption = {
 		[1] = "trinket",
-		[2] = "talent"
+    [2] = "talent",
+    [3] = "conduit",
+    [4] = "soulbind"
   }
 }
 
@@ -427,7 +434,6 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
           MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
         end
       else --check profiles
-        
         local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
         if profiles[InfoType][classID] == nil then return end
         if profiles[InfoType][classID][specID] == nil then return end
@@ -444,22 +450,52 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
   end
 end
 
-function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, personnalData)
+function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, InfoType, personnalData, conduitrank)
   if spellID then
-    local InfoType = "talent"
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
 
-    if profiles[InfoType][classID] == nil then return end
-    if profiles[InfoType][classID][specID] == nil then return end
-    for i, v in pairs(profiles[InfoType][classID][specID]) do
-      if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Base"] then
-        dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Base"])
-        MoreTooltipInfo.TooltipLine(destination, dps, i.." Base", v["color"])
+    --talent
+    if InfoType == "talent" then
+      if profiles[InfoType][classID] == nil then return end
+      if profiles[InfoType][classID][specID] == nil then return end
+      for i, v in pairs(profiles[InfoType][classID][specID]) do
+        if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Base"] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Base"])
+          MoreTooltipInfo.TooltipLine(destination, dps, i.." Base", v["color"])
+        end
+        if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Best"] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Best"])
+          MoreTooltipInfo.TooltipLine(destination, dps, i.." Best", v["color"])
+        end
       end
-      if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Best"] then
-        dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Best"])
-        MoreTooltipInfo.TooltipLine(destination, dps, i.." Best", v["color"])
+    end
+
+    --conduit
+    if InfoType == "conduit" then
+      if profiles[InfoType][classID] == nil then return end
+      if profiles[InfoType][classID][specID] == nil then return end
+      for i, v in pairs(profiles[InfoType][classID][specID]) do
+        if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID][conduitrank] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][spellID][conduitrank])
+          MoreTooltipInfo.TooltipLine(destination, dps, i.." Rank "..conduitrank, v["color"])
+        end
+      end
+    end
+
+    --soulbind
+    if InfoType == "soulbind" then
+      if profiles[InfoType][classID] == nil then return end
+      if profiles[InfoType][classID][specID] == nil then return end
+      for i, v in pairs(profiles[InfoType][classID][specID]) do
+        if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Base"] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Base"])
+          MoreTooltipInfo.TooltipLine(destination, dps, i.." Base", v["color"])
+        end
+        if v["enable"] and v["data"] and v["data"][spellID] and v["data"][spellID]["Best"] then
+          dps = MoreTooltipInfo.FormatSpace(v["data"][spellID]["Best"])
+          MoreTooltipInfo.TooltipLine(destination, dps, i.." Best", v["color"])
+        end
       end
     end
   end
@@ -499,10 +535,9 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   local dpsData = {strsplit("^",stringSplit[5])}
   
   local data = {}
-  local infoType = ""
+  local infoType = dpsData[1]
   local color = MoreTooltipInfo.GetDefaultColor(classID) .. "ff" --add alpha at the end
-  if dpsData[1] == "trinket" then
-    infoType = "trinket"
+  if infoType == "trinket" then
     -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999^[174500]125=123;130=456;135=789
     if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
     if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
@@ -520,8 +555,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
         end
       end
     end
-  elseif dpsData[1] == "talent" then
-    infoType = "talent"
+  elseif infoType == "talent" then
     --MoreTooltipInfo:8:64:\"X.com-patchwerk\":talent^[56377]Base=1234;Best=9999^[153595]Base=5678;Best=8888
     if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
     if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
@@ -535,6 +569,42 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
           for _, w in ipairs({strsplit(";", dpsData)}) do
             local talentType,dps = strsplit("=",w)
             data[tonumber(talentID)][talentType] = tonumber(dps)
+          end
+        end
+      end
+    end
+  elseif infoType == "conduit" then
+    --MoreTooltipInfo:8:64:"X.com-patchwerk":conduit^[56377]1=111;2=222^[153595]1=333;2=444
+    if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
+    if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
+
+    for i, v in ipairs(dpsData) do
+      if i ~= 1 then -- 1 is the type
+        local conduitID, dpsData = strsplit("]",v)
+        conduitID = tonumber(string.sub(conduitID,2))--remove the first[
+        if conduitID then
+          data[conduitID] = {}       
+          for _, w in ipairs({strsplit(";", dpsData)}) do
+            local rank,dps = strsplit("=",w)
+            data[tonumber(conduitID)][tonumber(rank)] = tonumber(dps)
+          end
+        end
+      end
+    end
+  elseif infoType == "soulbind" then
+    --MoreTooltipInfo:8:64:"X.com-patchwerk":soulbind^[56377]Base=111;Best=222^[153595]Base=333;Best=444
+    if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
+    if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
+
+    for i, v in ipairs(dpsData) do
+      if i ~= 1 then -- 1 is the type
+        local spellID, dpsData = strsplit("]",v)
+        spellID = tonumber(string.sub(spellID,2))--remove the first[
+        if spellID then
+          data[spellID] = {}       
+          for _, w in ipairs({strsplit(";", dpsData)}) do
+            local soulbindType,dps = strsplit("=",w)
+            data[tonumber(spellID)][soulbindType] = tonumber(dps)
           end
         end
       end
@@ -601,7 +671,7 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
       end    
 
       if cfg.enableBaseItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, false) end
-      MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, true)
+      if cfg.enablePersonnalItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, true) end
     end
   end
 end
@@ -609,6 +679,7 @@ end
 function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   local spellID
   local talentID = 0
+  local conduitID = 0
   
   if option == "default" then
     spellID = select(2, self:GetSpell())
@@ -620,9 +691,8 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
   elseif option == "debuff" then
     spellID = select(10, UnitDebuff(...))   
   elseif option == "conduit" then
-    local conduitID = select(1, ...)
-    --get spell id from game file
-    spellID = MoreTooltipInfo.GetConduitSpellID(select(1, ...))  
+    conduitID = select(1, ...)
+    spellID = MoreTooltipInfo.GetConduitSpellID(conduitID) --get spell id from game file 
   elseif option == "talent" then
     talentID = select(1, ...)
     spellID = select(6, GetTalentInfoByID(talentID)) 
@@ -638,13 +708,17 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
     if cfg.enableSpellRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
     if cfg.enableSpellGCD then MoreTooltipInfo.GCDTooltip(self, spellID) end
     if option == "conduit" then
-      if cfg.enableConduitID then MoreTooltipInfo.TooltipLine(self, select(1, ...), "ConduitID") end
-      if cfg.enableConduitRank then MoreTooltipInfo.TooltipLine(self, select(2, ...), "ConduitRank") end
+      local conduitRank = select(2, ...)
+      if cfg.enableConduitID then MoreTooltipInfo.TooltipLine(self, conduitID, "ConduitID") end
+      if cfg.enableConduitRank then MoreTooltipInfo.TooltipLine(self, conduitRank, "ConduitRank") end
       if cfg.enableConduitSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "ConduitSpellID") end
+      if cfg.enableConduitDPS then MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, true, conduitRank) end
     end
+    MoreTooltipInfo.SpellDPSTooltip(self, spellID, "soulbind", true)
+
     if talentID > 0 then
       if cfg.enableSpellTalentID then MoreTooltipInfo.TooltipLine(self, talentID, "TalentID") end
-      MoreTooltipInfo.SpellDPSTooltip(self, spellID, true)
+      MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, true)
     end
   end
 end
@@ -1164,6 +1238,18 @@ function f:CreateOptions()
             name = NORMAL_FONT_COLOR_CODE .. "Enable Base Item Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
+          enablePersonnalItemDPS = {
+            order = 2,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Personnal data for Item DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+--[[           enableLegendaryItemDPS = {
+            order = 3,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Shadowlands Legendaries Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          }, ]]
         },
       },
       gTalents = {
@@ -1181,7 +1267,33 @@ function f:CreateOptions()
           enableBestTalentDPS = {
             order = 1,
             type = "toggle",
-            name = NORMAL_FONT_COLOR_CODE .. "Enable Best talent Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Best talent Simulated DPS (with the best talents combination)" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+        },
+      },
+      gSoulbinds = {
+        type = "group",
+        name = "Talents",
+        inline = true,
+        order = 2,
+        args = {
+          enableSoulbindBaseDPS = {
+            order = 0,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Soulbinds Base Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+          enableSoulbindBestDPS = {
+            order = 1,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Soulbinds Best Simulated DPS (with the best soulbinds combination)" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          },
+          enableConduitDPS = {
+            order = 2,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable Conduit Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
         },

@@ -38,6 +38,26 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":talent^[56377]Base=1234;Best=9999^[153595]Base=5678;Best=8888
 ```
 
+Format for soulbind dps data is as follow (base_dps is for soulbind alone, best_dps is with the best soulbind combination):
+```
+MoreTooltipInfo:class_id:spec_id:"profileName":soulbind^[spellID]Base=base_dps;Best=best_dps^[spellID]Base=base_dps;Best=best_dps
+```
+
+for example :
+```
+MoreTooltipInfo:8:64:"X.com-patchwerk":soulbind^[331584]Base=111;Best=222^[331586]Base=333;Best=444
+```
+
+Format for conduit dps data is as follow:
+```
+MoreTooltipInfo:class_id:spec_id:"profileName":conduit^[spellID]conduit_rank=dps1;conduit_rank2=dps2^[spellID]conduit_rank=dps3;conduit_rank2=dps4
+```
+
+for example :
+```
+MoreTooltipInfo:8:64:"X.com-patchwerk":conduit^[336569]1=111;2=222^[336522]1=333;2=444
+```
+
 
 ## Currently available data
 - Spell:
@@ -53,21 +73,25 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":talent^[56377]Base=1234;Best=9999^[153595
   - enchantID
   - enchant spellID
   - enchant RPPM
-  - Simulated DPS
+  - Simulated DPS (trinket)
 - Talent:
   - Talent ID
   - Simulated DPS
 - Soulbinds:
   - Spell ID
+  - Simulated DPS
 - Conduits:
   - Conduit ID
   - Spell ID
   - Rank
+  - Simulated DPS
 
 ## UI
 You can enable and disable what you want to show in the tooltip in Game Menu > Interface > MoreTooltipInfo
  
 ## Known issues and development plan
+- Add Legendary simulated DPS
+
 - Add more data to the addon (Do not hesitate to suggest)
 
 - Add notifications when data changes

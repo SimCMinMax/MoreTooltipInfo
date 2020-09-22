@@ -1,6 +1,8 @@
 v2.0.1 09/xx/2020
 [UI] Add talent dps profiles
 [UI] Add talent ID
+[UI] Add soulbind dps profiles
+[UI] Add conduits dps profiles
 
 v2.0.0 09/18/2020
 [All] Shadowland availability
