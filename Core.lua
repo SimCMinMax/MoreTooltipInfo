@@ -90,7 +90,8 @@ local UIParameters={
 		[1] = "trinket",
     [2] = "talent",
     [3] = "conduit",
-    [4] = "soulbind"
+    [4] = "soulbind",
+    [5] = "legendary"
   }
 }
 
@@ -426,14 +427,17 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
 
-    if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
-      InfoType = "trinket"
-      if not personnalData then
+    if personnalData == "Base" then
+      if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
+        InfoType = "trinket"
         local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
         if dps then
           MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
         end
-      else --check profiles
+      end
+    elseif personnalData == "perso" then
+      if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
+        InfoType = "trinket"
         local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
         if profiles[InfoType][classID] == nil then return end
         if profiles[InfoType][classID][specID] == nil then return end
@@ -444,13 +448,31 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
           end
         end
       end
-    elseif itemRarity == 5 then --legendaries
-      InfoType = "legendary"
+    elseif personnalData == "legendary" then
+      if itemRarity == 5 then --legendaries
+        --[[     elseif itemRarity == 5 then --legendaries ]]     
+        InfoType = "legendary"
+        local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
+        local bonusIDs = MoreTooltipInfo.GetItemBonusID(itemSplit)
+
+        if profiles[InfoType][classID] == nil then return end
+        if profiles[InfoType][classID][specID] == nil then return end
+        for i, v in pairs(profiles[InfoType][classID][specID]) do
+          if v["enable"] and v["data"] then
+            for j, w in ipairs({strsplit("/", bonusIDs)}) do
+              if v["data"][tonumber(w)] then
+                dps = MoreTooltipInfo.FormatSpace(v["data"][tonumber(w)])
+                MoreTooltipInfo.TooltipLine(destination, dps, i, v["color"])
+              end
+            end
+          end
+        end
+      end
     end
   end
 end
 
-function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, InfoType, personnalData, conduitrank)
+function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, InfoType, conduitrank)
   if spellID then
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
@@ -550,7 +572,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
           data[itemID] = {}       
           for _, w in ipairs({strsplit(";", dpsData)}) do
             local ilvl,dps = strsplit("=",w)
-            data[tonumber(itemID)][tonumber(ilvl)] = tonumber(dps)
+            data[itemID][tonumber(ilvl)] = tonumber(dps)
           end
         end
       end
@@ -568,7 +590,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
           data[talentID] = {}       
           for _, w in ipairs({strsplit(";", dpsData)}) do
             local talentType,dps = strsplit("=",w)
-            data[tonumber(talentID)][talentType] = tonumber(dps)
+            data[talentID][talentType] = tonumber(dps)
           end
         end
       end
@@ -586,7 +608,7 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
           data[conduitID] = {}       
           for _, w in ipairs({strsplit(";", dpsData)}) do
             local rank,dps = strsplit("=",w)
-            data[tonumber(conduitID)][tonumber(rank)] = tonumber(dps)
+            data[conduitID][tonumber(rank)] = tonumber(dps)
           end
         end
       end
@@ -604,8 +626,22 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
           data[spellID] = {}       
           for _, w in ipairs({strsplit(";", dpsData)}) do
             local soulbindType,dps = strsplit("=",w)
-            data[tonumber(spellID)][soulbindType] = tonumber(dps)
+            data[spellID][soulbindType] = tonumber(dps)
           end
+        end
+      end
+    end
+  elseif infoType == "legendary" then
+    --MoreTooltipInfo:8:64:"X.com-patchwerk":legendary^[56377]111^[336522]666
+    if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
+    if profiles[infoType][classID][specID] == nil then profiles[infoType][classID][specID] = {} end
+
+    for i, v in ipairs(dpsData) do
+      if i ~= 1 then -- 1 is the type
+        local bonusID, dpsData = strsplit("]",v)
+        bonusID = tonumber(string.sub(bonusID,2))--remove the first[
+        if bonusID then
+          data[bonusID] = tonumber(dpsData)
         end
       end
     end
@@ -670,8 +706,9 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
         if cfg.enableItemRPPM then MoreTooltipInfo.RPPMTooltip(self, spellID) end
       end    
 
-      if cfg.enableBaseItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, false) end
-      if cfg.enablePersonnalItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, true) end
+      if cfg.enableBaseItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, "base") end
+      if cfg.enablePersonnalItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, "perso") end
+      if cfg.enableLegendaryItemDPS then MoreTooltipInfo.ItemDPSTooltip(self, itemLink, itemID, "legendary") end
     end
   end
 end
@@ -712,13 +749,13 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
       if cfg.enableConduitID then MoreTooltipInfo.TooltipLine(self, conduitID, "ConduitID") end
       if cfg.enableConduitRank then MoreTooltipInfo.TooltipLine(self, conduitRank, "ConduitRank") end
       if cfg.enableConduitSpellID then MoreTooltipInfo.TooltipLine(self, spellID, "ConduitSpellID") end
-      if cfg.enableConduitDPS then MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, true, conduitRank) end
+      if cfg.enableConduitDPS then MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, conduitRank) end
     end
-    MoreTooltipInfo.SpellDPSTooltip(self, spellID, "soulbind", true)
+    MoreTooltipInfo.SpellDPSTooltip(self, spellID, "soulbind")
 
     if talentID > 0 then
       if cfg.enableSpellTalentID then MoreTooltipInfo.TooltipLine(self, talentID, "TalentID") end
-      MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, true)
+      MoreTooltipInfo.SpellDPSTooltip(self, spellID, option)
     end
   end
 end
@@ -1244,12 +1281,12 @@ function f:CreateOptions()
             name = NORMAL_FONT_COLOR_CODE .. "Enable Personnal data for Item DPS" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
---[[           enableLegendaryItemDPS = {
+          enableLegendaryItemDPS = {
             order = 3,
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Shadowlands Legendaries Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
-          }, ]]
+          },
         },
       },
       gTalents = {

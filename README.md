@@ -58,6 +58,16 @@ for example :
 MoreTooltipInfo:8:64:"X.com-patchwerk":conduit^[336569]1=111;2=222^[336522]1=333;2=444
 ```
 
+Format for legendary dps data is as follow:
+```
+MoreTooltipInfo:class_id:spec_id:"profileName":legendary^[bonusID]dps^[bonusID2]dps2
+```
+
+for example :
+```
+MoreTooltipInfo:8:64:"X.com-patchwerk":legendary^[6830]111^[7104]666
+```
+
 
 ## Currently available data
 - Spell:
