@@ -518,14 +518,14 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   local stringSplit = {strsplit(":",value)}
 
   -- check MTI string
-  if stringSplit[1] ~= "MoreTooltipInfo" then return false end
+  if stringSplit[1] ~= "MoreTooltipInfo" then print("Incorect prefix") return false end
 
   -- check class
-  if tonumber(stringSplit[2]) == 0 or tonumber(stringSplit[2]) > 12 then return false end
+  if not MoreTooltipInfo.SpecNames[tonumber(stringSplit[2])] then print("Incorect classID") return false end
   local classID = tonumber(stringSplit[2])
 
   -- check specs
-  if tonumber(stringSplit[3]) < 62 or tonumber(stringSplit[2]) > 581 then return false end
+  if not MoreTooltipInfo.SpecNames[classID][tonumber(stringSplit[3])] then print("Incorect specID") return false end
   local specID = tonumber(stringSplit[3])
 
   --Profile Name
