@@ -12,7 +12,6 @@ AceConfig-3.0\AceConfig-3.0.xml
 LibItemUpgradeInfo-1.0\LibItemUpgradeInfo-1.0.xml
 
 Core.lua
-Settings.lua
 
 #Enums
 Enum\RPPM.lua
