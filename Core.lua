@@ -297,13 +297,6 @@ function MoreTooltipInfo.GetItemSpellID(itemID)
   end
 end
 
-function MoreTooltipInfo.GetConduitSpellID(conduitID)
-  local spellID = MoreTooltipInfo.Enum.Conduits[conduitID]
-  if spellID then
-    return spellID
-  end
-end
-
 function MoreTooltipInfo.GetRPPM(spellID)
   local rppmtable = MoreTooltipInfo.Enum.RPPM[spellID]
   if not rppmtable then
@@ -729,7 +722,7 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
     spellID = select(10, UnitDebuff(...))   
   elseif option == "conduit" then
     conduitID = select(1, ...)
-    spellID = MoreTooltipInfo.GetConduitSpellID(conduitID) --get spell id from game file 
+    spellID = C_Soulbinds.GetConduitSpellID(conduitID,select(2, ...))
   elseif option == "talent" then
     talentID = select(1, ...)
     spellID = select(6, GetTalentInfoByID(talentID)) 
