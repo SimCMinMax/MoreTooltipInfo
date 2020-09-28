@@ -5,7 +5,7 @@
 ## Dependencies: HeroDBC
 ## SavedVariables: MoreTooltipInfoVars
 
-## Version: 2.0.1
+## Version: 2.0.2
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 libs\AceGUI-3.0\AceGUI-3.0.xml

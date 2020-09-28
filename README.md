@@ -19,6 +19,7 @@ For item DPS, there is base data coming from simulations from [bloodmallet.com](
 You can also import your own profile to better match your char. Open profile manager with `/mti`.
 
 **Trinket DPS**
+
 Format for item dps data is as follow :
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":trinket^[item_id1]ilvl1=dps1;ilvl2=dps2;ilvl3=dps3^[item_id2]ilvl4=dps4;ilvl5=dps5;ilvl6=dps6
@@ -30,6 +31,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":trinket^[174103]115=111;125=1234;130=1250
 ```
 
 **Talent DPS**
+
 Format for talent dps data is as follow (base_dps is for talent alone, best_dps is with the best talent combination):
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":talent^[spellID]Base=base_dps;Best=best_dps^[spellID2]Base=base_dps2;Best=best_dps2
@@ -41,6 +43,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":talent^[56377]Base=1234;Best=9999^[153595
 ```
 
 **Soulbind DPS**
+
 Format for soulbind dps data is as follow (base_dps is for soulbind alone, best_dps is with the best soulbind combination):
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":soulbind^[spellID]Base=base_dps;Best=best_dps^[spellID]Base=base_dps;Best=best_dps
@@ -52,6 +55,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":soulbind^[331584]Base=111;Best=222^[33158
 ```
 
 **Conduit DPS**
+
 Format for conduit dps data is as follow:
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":conduit^[spellID]conduit_rank=dps1;conduit_rank2=dps2^[spellID]conduit_rank=dps3;conduit_rank2=dps4
@@ -63,6 +67,7 @@ MoreTooltipInfo:8:64:"X.com-patchwerk":conduit^[336569]1=111;2=222^[336522]1=333
 ```
 
 **Legendary DPS**
+
 Format for legendary dps data is as follow:
 ```
 MoreTooltipInfo:class_id:spec_id:"profileName":legendary^[bonusID]dps^[bonusID2]dps2
@@ -106,6 +111,10 @@ You can enable and disable what you want to show in the tooltip in Game Menu > I
  
 ## Known issues and development plan
 - Fix talent data divided in two parts
+
+- Show Soulbind and conduit dps directly into the UI
+
+- Show Talent DPS directly into the UI
 
 - Add more data to the addon (Do not hesitate to suggest)
 
