@@ -381,7 +381,6 @@ function MoreTooltipInfo.GetDPS(itemLink,itemID,tooltip)
   if MoreTooltipInfo.Data.ItemDPS[itemID] then
     local itemData = MoreTooltipInfo.Data.ItemDPS[itemID]
     local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
-    print(itemlevel,specID,classID)
     if itemlevel and specID and classID then
       if itemData[classID] and itemData[classID][specID] and itemData[classID][specID][itemlevel] then
         dps = MoreTooltipInfo.FormatSpace(itemData[classID][specID][itemlevel])
