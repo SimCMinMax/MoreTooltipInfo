@@ -114,8 +114,6 @@ You can enable and disable what you want to show in the tooltip in Game Menu > I
 
 - Show Soulbind and conduit dps directly into the UI
 
-- Show Talent DPS directly into the UI
-
 - Add more data to the addon (Do not hesitate to suggest)
 
 - Add notifications when data changes

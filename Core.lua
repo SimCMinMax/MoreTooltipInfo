@@ -36,6 +36,7 @@ local charDefaults = {
   enableLegendaryItemDPS = true,
   enableBaseTalentDPS = true,
   enableBestTalentDPS = true,
+  enableTalentDPSOnUI = true,
   enableSoulbindID = true,
   enableSoulbindBaseDPS = true,
   enableSoulbindBestDPS = true,
@@ -65,7 +66,9 @@ local UIElements={
   importButton,
   typeDropdown,
   enablecheckbox,
+  useOnUIChechbox,
   colorpicker,
+  talentStrings={}
 }
 local UIParameters={
 	--Consts
@@ -77,7 +80,10 @@ local UIParameters={
 	OFFSET_GEM_ID_4 	= 6,
 	OFFSET_SUFFIX_ID 	= 7,
 	OFFSET_FLAGS 		  = 11,
-	OFFSET_BONUS_ID 	= 13,
+  OFFSET_BONUS_ID 	= 13,
+  
+  MAX_TALENT_ROW = 7,
+  MAX_TALENT_PER_ROW = 3,
   
   detailsLoaded=false,
   detailsDrawn=false,
@@ -93,7 +99,8 @@ local UIParameters={
     [3] = "conduit",
     [4] = "soulbind",
     [5] = "legendary"
-  }
+  },
+  talentOnUILoaded=false,
 }
 
 local f = CreateFrame("Frame")
@@ -519,12 +526,27 @@ function MoreTooltipInfo.GetDefaultColor(classID)
   return MoreTooltipInfo.SpecNames[classID]["color"]
 end
 
-function MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, enable, color, string) 
+function MoreTooltipInfo.CheckIfUseOnUIExists(InfoType, classID, specID)
+  local exists = false
+  local profileName = ""
+  if profiles[InfoType][classID] == nil then return end
+  if profiles[InfoType][classID][specID] == nil then return end
+  for i, v in pairs(profiles[InfoType][classID][specID]) do
+    if v["useOnUI"] then
+      exists = true
+      profileName = i
+    end
+  end
+  return exists,profileName
+end
+
+function MoreTooltipInfo.NewProfile(type, classID, specID, profileName, data, enable, color, string, useOnUI) 
   profiles[type][classID][specID][profileName] = {}
   profiles[type][classID][specID][profileName]["enable"] = enable
   profiles[type][classID][specID][profileName]["color"] = color
   profiles[type][classID][specID][profileName]["data"] = data
   profiles[type][classID][specID][profileName]["string"] = string
+  profiles[type][classID][specID][profileName]["useOnUI"] = useOnUI
 end
 
 function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
@@ -551,6 +573,11 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
   local data = {}
   local infoType = dpsData[1]
   local color = MoreTooltipInfo.GetDefaultColor(classID) .. "ff" --add alpha at the end
+  local useOnUI = false 
+  if not MoreTooltipInfo.CheckIfUseOnUIExists(infoType, classID, specID) then
+    useOnUI = true --if no other profile is shown, use this one
+  end
+
   if infoType == "trinket" then
     -- MoreTooltipInfo:8:63:"X.com-patchwerk":trinket^[174103]125=1234;130=1250;150=9999^[174500]125=123;130=456;135=789
     if profiles[infoType][classID] == nil then profiles[infoType][classID] = {} end
@@ -649,13 +676,14 @@ function MoreTooltipInfo.ValidateItemPersonnalData(info,value)
     tempdata["enable"] = true
     tempdata["color"] = color
     tempdata["string"] = value
+    tempdata["useOnUI"] = useOnUI
 
     StaticPopup_Show("MTI_CONFIRM_EXISTS_POPUP","","",tempdata)
     
     return false
   end
 
-  MoreTooltipInfo.NewProfile(infoType, classID, specID, profileName, data, true, color, value) 
+  MoreTooltipInfo.NewProfile(infoType, classID, specID, profileName, data, true, color, value, useOnUI) 
 
   return true
 end
@@ -785,11 +813,27 @@ StaticPopupDialogs["MTI_CONFIRM_EXISTS_POPUP"] = {
   button2 = "No",
   OnAccept = function(self, data, data2)
     DeleteProfile(data["classID"],data["specID"],data["profileName"])
-    MoreTooltipInfo.NewProfile(data["type"], data["classID"], data["specID"], data["profileName"], data["data"], data["enable"], data["color"], data["string"])
+    MoreTooltipInfo.NewProfile(data["type"], data["classID"], data["specID"], data["profileName"], data["data"], data["enable"], data["color"], data["string"], data["useOnUI"])
     OpenProfileUI()
   end,
   timeout = 0,
   cancels = "MTI_IMPORT_POPUP",
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
+
+StaticPopupDialogs["MTI_CONFIRM_USEONUI_POPUP"] = {
+  text = "A profile is already shown on UI. Do you want to overwrite it?",
+
+  button1 = "Yes",
+  button2 = "No",
+  OnAccept = function(self, data, data2)
+    UIParameters.talentOnUILoaded = false
+    DisableOnUI(UIParameters.currentClassID, UIParameters.currentSpecID, data["profileName"])
+    EnableOnUI(UIParameters.currentClassID, UIParameters.currentSpecID, UIParameters.currentProfile)
+  end,
+  timeout = 0,
   whileDead = true,
   hideOnEscape = true,
   preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
@@ -869,14 +913,8 @@ function DrawOptionGroup(classID, specID, profileName)
     UIParameters.currentClassID = classID
     UIParameters.currentSpecID = specID
     UIElements.titleLabel:SetText(profileName)
-    UIElements.enablecheckbox:SetCallback("OnValueChanged", function(widget)
-      if profiles[UIParameters.currentType][classID][specID][profileName]["enable"] then 
-        DisableProfile(classID, specID, profileName)
-      else
-        EnableProfile(classID, specID, profileName)
-      end
-    end)
     UIElements.enablecheckbox:SetValue(profiles[UIParameters.currentType][classID][specID][profileName]["enable"])
+    UIElements.useOnUIChechbox:SetValue(profiles[UIParameters.currentType][classID][specID][profileName]["useOnUI"])
     local r,g,b = hex2rgb(profiles[UIParameters.currentType][classID][specID][profileName]["color"])
     UIElements.colorpicker:SetColor(r/255,g/255,b/255,1)
   else
@@ -922,14 +960,24 @@ function EnableProfile(classID, specID, profileName)
   profiles[UIParameters.currentType][classID][specID][profileName]["enable"] = true
 end
 
-function SetProfileColor(classID, specID, profileName, color)
-  --print("color "..classID.." "..specID.." "..profileName.." "..color)
-  profiles[UIParameters.currentType][classID][specID][profileName]["color"] = color
-end
-
 function DisableProfile(classID, specID, profileName)
   --print("disable "..classID.." "..specID.." "..profileName)
   profiles[UIParameters.currentType][classID][specID][profileName]["enable"] = false
+end
+
+function EnableOnUI(classID, specID, profileName)
+  --print("enable "..classID.." "..specID.." "..profileName)
+  profiles[UIParameters.currentType][classID][specID][profileName]["useOnUI"] = true
+end
+
+function DisableOnUI(classID, specID, profileName)
+  --print("disable "..classID.." "..specID.." "..profileName)
+  profiles[UIParameters.currentType][classID][specID][profileName]["useOnUI"] = false
+end
+
+function SetProfileColor(classID, specID, profileName, color)
+  --print("color "..classID.." "..specID.." "..profileName.." "..color)
+  profiles[UIParameters.currentType][classID][specID][profileName]["color"] = color
 end
 
 function AddSpacer(targetFrame,full,width,height)
@@ -1061,7 +1109,35 @@ function OpenProfileUI()
     UIElements.enablecheckbox = AGUI:Create("CheckBox")
     UIElements.enablecheckbox:SetLabel("Enable")
     UIElements.enablecheckbox:SetRelativeWidth(1)
+    UIElements.enablecheckbox:SetCallback("OnValueChanged", function(widget)
+      if profiles[UIParameters.currentType][UIParameters.currentClassID][UIParameters.currentSpecID][UIParameters.currentProfile]["enable"] then 
+        DisableProfile(UIParameters.currentClassID, UIParameters.currentSpecID, UIParameters.currentProfile)
+      else
+        EnableProfile(UIParameters.currentClassID, UIParameters.currentSpecID, UIParameters.currentProfile)
+      end
+    end)
     UIElements.detailsGroup:AddChild(UIElements.enablecheckbox)
+
+    if UIParameters.availableOption[UIParameters.currentTypeIndex] == "talent" then
+      UIElements.useOnUIChechbox = AGUI:Create("CheckBox")
+      UIElements.useOnUIChechbox:SetLabel("Show in the talent UI")
+      UIElements.useOnUIChechbox:SetRelativeWidth(1)
+      UIElements.useOnUIChechbox:SetCallback("OnValueChanged", function(widget)
+        if profiles[UIParameters.currentType][UIParameters.currentClassID][UIParameters.currentSpecID][UIParameters.currentProfile]["useOnUI"] then 
+          DisableOnUI(UIParameters.currentClassID, UIParameters.currentSpecID, UIParameters.currentProfile)
+        else
+          local onUIExists,profileName = MoreTooltipInfo.CheckIfUseOnUIExists(UIParameters.availableOption[UIParameters.currentTypeIndex], UIParameters.currentClassID, UIParameters.currentSpecID)
+          if onUIExists then 
+            local tempdata = {}
+            tempdata["profileName"] = profileName
+            StaticPopup_Show ("MTI_CONFIRM_USEONUI_POPUP","","",tempdata)
+          else
+            EnableOnUI(UIParameters.currentClassID, UIParameters.currentSpecID, UIParameters.currentProfile)
+          end
+        end
+      end)
+      UIElements.detailsGroup:AddChild(UIElements.useOnUIChechbox)
+    end
 
     UIElements.colorpicker = AGUI:Create("ColorPicker")
     UIElements.colorpicker:SetLabel("Color")
@@ -1287,7 +1363,7 @@ function f:CreateOptions()
         inline = true,
         order = 2,
         args = {
-          enableBaseTalentDPS = {
+--[[           enableBaseTalentDPS = {
             order = 0,
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Base talent Simulated DPS" .. FONT_COLOR_CODE_CLOSE,
@@ -1297,6 +1373,12 @@ function f:CreateOptions()
             order = 1,
             type = "toggle",
             name = NORMAL_FONT_COLOR_CODE .. "Enable Best talent Simulated DPS (with the best talents combination)" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+          }, ]]
+          enableTalentDPSOnUI = {
+            order = 2,
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Show talent Simulated DPS on talent UI" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
           },
         },
@@ -1361,6 +1443,102 @@ ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.M
 ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
 GameTooltip:HookScript("OnTooltipSetUnit", function(...) MoreTooltipInfo.ManageTooltips("unit", nil, ...) end)
 
+function createFontString(parent,text,textType)
+  local fontString
+  fontString = f:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+  local fontName, _, _ = fontString:GetFont()
+  fontString:SetFont(fontName, 9, "")
+
+  --position switch
+  if textType == "talentBase" then
+    fontString:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -5, 0)
+  elseif textType == "talentBest" then
+    fontString:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -5, 0)
+  end
+
+  fontString:SetText(text)
+  f:SetFrameStrata("HIGH")
+  fontString:Show()
+  return fontString
+end
+
+function testHook2(tier)
+  local lists = _G.SoulbindViewer.ConduitList.ScrollBox.ScrollTarget.Lists
+  for index, list in ipairs(lists) do
+		local collection = C_Soulbinds.GetConduitCollection(list.conduitType);
+		local matchesSpecSet = {};
+    for index, collectionData in ipairs(collection) do
+      print(collectionData.conduitID)
+		end
+	end
+end
+
+function DrawTalentDPSOnUI()
+  if (not _G.PlayerTalentFrameSpecialization:IsShown()) then
+    --print("enter")
+
+    if UIParameters.talentOnUILoaded then
+      --print("show")
+      for i=1, UIParameters.MAX_TALENT_ROW do
+        for j=1, UIParameters.MAX_TALENT_PER_ROW do
+          curentTalent = ""..i..j
+          if UIElements.talentStrings[curentTalent] then
+            if UIElements.talentStrings[curentTalent]["Base"] then UIElements.talentStrings[curentTalent]["Base"]:Show() end
+            if UIElements.talentStrings[curentTalent]["Best"] then UIElements.talentStrings[curentTalent]["Best"]:Show() end
+          end
+        end
+      end
+    else
+      --print("load")
+      local classID = MoreTooltipInfo.GetClassID()
+      local specID = MoreTooltipInfo.GetSpecID()
+      local data = {}
+
+      if profiles["talent"][classID] == nil then return end
+      if profiles["talent"][classID][specID] == nil then return end
+      for i, v in pairs(profiles["talent"][classID][specID]) do
+        if v["enable"] and v["useOnUI"] then
+          --print("profile")
+          data = v["data"]
+        end
+      end
+
+      local p,curentTalent,currentFrame,spellID
+      for i=1, UIParameters.MAX_TALENT_ROW do
+        for j=1, UIParameters.MAX_TALENT_PER_ROW do
+          curentTalent = ""..i..j
+          currentFrame = "PlayerTalentFrameTalentsTalentRow"..i.."Talent"..j
+
+          _, _, _, _, _, spellID = GetTalentInfoByID(_G[currentFrame]:GetID())
+
+          p = _G[currentFrame]
+          UIElements.talentStrings[curentTalent] = {}
+          if data and data[spellID] and data[spellID]["Base"] then
+            dps = MoreTooltipInfo.FormatSpace(data[spellID]["Base"])
+            UIElements.talentStrings[curentTalent]["Base"] = createFontString(p,dps,"talentBase")
+          end
+          if data and data[spellID] and data[spellID]["Best"] then
+            dps = MoreTooltipInfo.FormatSpace(data[spellID]["Best"])
+            UIElements.talentStrings[curentTalent]["Best"] = createFontString(p,dps,"talentBest")
+          end
+        end
+      end
+
+      UIParameters.talentOnUILoaded = true
+    end
+  end
+end
+function HideTalentOverlay()
+  --print("leave")
+  for i=1, UIParameters.MAX_TALENT_ROW do
+    for j=1, UIParameters.MAX_TALENT_PER_ROW do
+      curentTalent = ""..i..j
+      if UIElements.talentStrings[curentTalent] and UIElements.talentStrings[curentTalent]["Base"] then UIElements.talentStrings[curentTalent]["Base"]:Hide() end
+      if UIElements.talentStrings[curentTalent] and UIElements.talentStrings[curentTalent]["Best"] then UIElements.talentStrings[curentTalent]["Best"]:Hide() end
+    end
+  end
+end
+
 ---------------------
 --Events management -
 ---------------------
@@ -1376,6 +1554,13 @@ function f:ADDON_LOADED(event, addon)
     cfg = db.char[playerRealm][playerName]
     profiles = db.profiles
     self:CreateOptions()
+  elseif addon == "Blizzard_TalentUI" then
+    --print("Talent loaded")
+    _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnShow", function() if cfg.enableConduitID then DrawTalentDPSOnUI() end end)
+    _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnHide", function() if cfg.enableConduitID then HideTalentOverlay() end end)
+  elseif addon == "Blizzard_Soulbinds" then
+    --print("Soulbind loaded")
+    _G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
   end
 end
 
