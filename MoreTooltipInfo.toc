@@ -2,20 +2,17 @@
 ## Title: MoreTooltipInfo
 ## Notes: Adds informations about items and spells in tooltip (RPPM, GCD, simDPS...)
 ## Author: Kutikuti
+## Dependencies: HeroDBC
 ## SavedVariables: MoreTooltipInfoVars
 
 ## Version: 2.0.1
-LibStub\LibStub.lua
-CallbackHandler-1.0\CallbackHandler-1.0.lua
-AceGUI-3.0\AceGUI-3.0.xml
-AceConfig-3.0\AceConfig-3.0.xml
-LibItemUpgradeInfo-1.0\LibItemUpgradeInfo-1.0.xml
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
+libs\LibItemUpgradeInfo-1.0\LibItemUpgradeInfo-1.0.xml
 
 Core.lua
 
-#Enums
-Enum\RPPM.lua
-Enum\ItemSpell.lua
-Enum\ItemDPS.lua
-Enum\TriggerGCD.lua
-Enum\SpellEnchants.lua
+#Data
+Data\ItemDPS.lua

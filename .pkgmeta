@@ -1,0 +1,8 @@
+package-as: MoreTooltipInfo
+
+required-dependencies:
+    - 410191-herodbc
+
+enable-nolib-creation: no
+
+license-output: LICENSE

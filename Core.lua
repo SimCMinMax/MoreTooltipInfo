@@ -1,12 +1,13 @@
 local addonName, MTI = ...;
 MoreTooltipInfo = MTI
-MoreTooltipInfo.Enum = {}
+MoreTooltipInfo.Data = {}
 
 local _G = _G
 local ACD = LibStub("AceConfigDialog-3.0")
 local ACR = LibStub("AceConfigRegistry-3.0")
 local IUI = LibStub("LibItemUpgradeInfo-1.0")
 local AGUI= LibStub("AceGUI-3.0")
+local DBC = HeroDBC.DBC
 
 local dataVersion = "9.0.2.35854"
 local dataDate = "2020-09-10_08:47"
@@ -291,14 +292,14 @@ function MoreTooltipInfo.getGemString(self,itemLink)
 end
 
 function MoreTooltipInfo.GetItemSpellID(itemID)
-  local spellID = MoreTooltipInfo.Enum.ItemSpell[itemID]
+  local spellID = DBC.ItemSpell[itemID]
   if spellID then
     return spellID
   end
 end
 
 function MoreTooltipInfo.GetRPPM(spellID)
-  local rppmtable = MoreTooltipInfo.Enum.RPPM[spellID]
+  local rppmtable = DBC.SpellRPPM[spellID]
   if not rppmtable then
     return nil
   end
@@ -365,8 +366,8 @@ end
 
 function MoreTooltipInfo.GetGCD(spellID)
   local gcd = 0
-  if MoreTooltipInfo.Enum.TriggerGCD[spellID] ~= nil then
-    gcd = MoreTooltipInfo.Enum.TriggerGCD[spellID]
+  if DBC.SpellGCD[spellID] ~= nil then
+    gcd = DBC.SpellGCD[spellID]
   else
     return nil
   end
@@ -377,9 +378,10 @@ function MoreTooltipInfo.GetDPS(itemLink,itemID,tooltip)
   local dps
   local specID = MoreTooltipInfo.GetSpecID()
   local classID = MoreTooltipInfo.GetClassID()
-  if MoreTooltipInfo.Enum.ItemDPS[itemID] then
-    local itemData = MoreTooltipInfo.Enum.ItemDPS[itemID]
+  if MoreTooltipInfo.Data.ItemDPS[itemID] then
+    local itemData = MoreTooltipInfo.Data.ItemDPS[itemID]
     local itemlevel = IUI:GetUpgradedItemLevel(itemLink) or 0
+    print(itemlevel,specID,classID)
     if itemlevel and specID and classID then
       if itemData[classID] and itemData[classID][specID] and itemData[classID][specID][itemlevel] then
         dps = MoreTooltipInfo.FormatSpace(itemData[classID][specID][itemlevel])
@@ -419,8 +421,7 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
     local InfoType
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
-
-    if personnalData == "Base" then
+    if personnalData == "base" then
       if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
         InfoType = "trinket"
         local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
@@ -443,7 +444,6 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
       end
     elseif personnalData == "legendary" then
       if itemRarity == 5 then --legendaries
-        --[[     elseif itemRarity == 5 then --legendaries ]]     
         InfoType = "legendary"
         local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
         local bonusIDs = MoreTooltipInfo.GetItemBonusID(itemSplit)
@@ -684,7 +684,7 @@ function MoreTooltipInfo.ItemTooltipOverride(self)
       local enchantID = itemSplit[2]
       if enchantID > 0 then
         if cfg.enableItemEnchantID then MoreTooltipInfo.TooltipLine(self, enchantID, "EnchantID") end
-        local enchantSpellID = MoreTooltipInfo.Enum.SpellEnchants[enchantID]
+        local enchantSpellID = DBC.SpellEnchants[enchantID]
         if enchantSpellID then --enchant, we put enchant spellid and rppm
           if cfg.enableItemEnchantSpellID then MoreTooltipInfo.TooltipLine(self, enchantSpellID, "Enchant SpellID") end
           if cfg.enableItemEnchantSpellRPPM then MoreTooltipInfo.RPPMTooltip(self, enchantSpellID, "Enchant RPPM") end
