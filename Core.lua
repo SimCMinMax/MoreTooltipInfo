@@ -9,9 +9,6 @@ local IUI = LibStub("LibItemUpgradeInfo-1.0")
 local AGUI= LibStub("AceGUI-3.0")
 local DBC = HeroDBC.DBC
 
-local dataVersion = "9.0.2.35854"
-local dataDate = "2020-09-10_08:47"
-
 local cfg
 local profiles
 local dbDefaults = {
@@ -1166,7 +1163,7 @@ function f:CreateOptions()
 		args = {
       version = {
         type = "description",
-        name = NORMAL_FONT_COLOR_CODE .. "Data version: " .. HIGHLIGHT_FONT_COLOR_CODE .. dataVersion .. " (" .. dataDate .. ")" .. FONT_COLOR_CODE_CLOSE,
+        name = NORMAL_FONT_COLOR_CODE .. "Data version: " .. HIGHLIGHT_FONT_COLOR_CODE .. DBC.metaVersion .. " (" .. DBC.metaTime .. ")" .. FONT_COLOR_CODE_CLOSE,
         fontSize = "medium",
         width = "full",
         order = 1,
