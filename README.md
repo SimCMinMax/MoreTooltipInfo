@@ -118,7 +118,7 @@ You can enable and disable what you want to show in the tooltip in Game Menu > I
 
 - Add notifications when data changes
 
-- Cleanup and make all that data available through a Lib
+- Cleanup and reorganize
 
 
 ## Credits

@@ -140,6 +140,7 @@ end
 
 function MoreTooltipInfo.FormatSpace(number)
   local formatted = number
+  local k
 
   while true do  
     formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1 %2')
@@ -340,7 +341,7 @@ function MoreTooltipInfo.GetRPPM(spellID)
   local modSpec = nil
   if rppmtable[4] then
     if rppmtable[4][specID] then
-      modSpec = rppmtable[4][bspecID]
+      modSpec = rppmtable[4][specID]
     end
   end
     
@@ -424,10 +425,11 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
     local InfoType
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
+    local dps
     if personnalData == "base" then
       if itemEquipLoc == "INVTYPE_TRINKET" then --trinkets
         InfoType = "trinket"
-        local dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
+        dps = MoreTooltipInfo.GetDPS(itemLink, itemID, destination)
         if dps then
           MoreTooltipInfo.TooltipLine(destination, dps, "Base simDPS")
         end
@@ -472,7 +474,7 @@ function MoreTooltipInfo.SpellDPSTooltip(destination, spellID, InfoType, conduit
   if spellID then
     local specID = MoreTooltipInfo.GetSpecID()
     local classID = MoreTooltipInfo.GetClassID()
-
+    local dps
     --talent
     if InfoType == "talent" then
       if profiles[InfoType][classID] == nil then return end
@@ -1475,6 +1477,7 @@ function DrawTalentDPSOnUI()
     --print("enter")
 
     if UIParameters.talentOnUILoaded then
+      local curentTalent
       --print("show")
       for i=1, UIParameters.MAX_TALENT_ROW do
         for j=1, UIParameters.MAX_TALENT_PER_ROW do
@@ -1495,12 +1498,11 @@ function DrawTalentDPSOnUI()
       if profiles["talent"][classID][specID] == nil then return end
       for i, v in pairs(profiles["talent"][classID][specID]) do
         if v["enable"] and v["useOnUI"] then
-          --print("profile")
           data = v["data"]
         end
       end
 
-      local p,curentTalent,currentFrame,spellID
+      local p, curentTalent, currentFrame, spellID, dps
       for i=1, UIParameters.MAX_TALENT_ROW do
         for j=1, UIParameters.MAX_TALENT_PER_ROW do
           curentTalent = ""..i..j
@@ -1526,6 +1528,7 @@ function DrawTalentDPSOnUI()
   end
 end
 function HideTalentOverlay()
+  local curentTalent
   --print("leave")
   for i=1, UIParameters.MAX_TALENT_ROW do
     for j=1, UIParameters.MAX_TALENT_PER_ROW do
