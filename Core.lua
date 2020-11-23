@@ -37,10 +37,14 @@ local charDefaults = {
   enableSoulbindID = true,
   enableSoulbindBaseDPS = true,
   enableSoulbindBestDPS = true,
+  enableSoulbindDPSOnUI = true,
   enableConduitID = true,
   enableConduitSpellID = true,
   enableConduitRank = true,
-  enableConduitDPS = true
+  enableConduitDPS = true,
+  enableConduitDPSOnUI = true,
+  enableNPCID = true,
+  enableTextureID = false,
 }
 local profileDefaults = { 
   trinket = {},
@@ -65,7 +69,9 @@ local UIElements={
   enablecheckbox,
   useOnUIChechbox,
   colorpicker,
-  talentStrings={}
+  talentStrings={},
+  conduitStrings={},
+  soulbindStrings={}
 }
 local UIParameters={
 	--Consts
@@ -81,6 +87,9 @@ local UIParameters={
   
   MAX_TALENT_ROW = 7,
   MAX_TALENT_PER_ROW = 3,
+
+  MAX_SOULBIND_ROW = 7,
+  MAX_SOULBIND_PER_ROW = 3,
   
   detailsLoaded=false,
   detailsDrawn=false,
@@ -98,6 +107,8 @@ local UIParameters={
     [5] = "legendary"
   },
   talentOnUILoaded=false,
+  conduitOnUILoaded=false,
+  soulbindOnUILoaded=false,
 }
 
 local f = CreateFrame("Frame")
@@ -452,9 +463,10 @@ function MoreTooltipInfo.ItemDPSTooltip(destination, itemLink, itemID, personnal
         InfoType = "legendary"
         local itemSplit = MoreTooltipInfo.GetItemSplit(itemLink)
         local bonusIDs = MoreTooltipInfo.GetItemBonusID(itemSplit)
-
+        if not bonusIDs then return end
         if profiles[InfoType][classID] == nil then return end
         if profiles[InfoType][classID][specID] == nil then return end
+
         for i, v in pairs(profiles[InfoType][classID][specID]) do
           if v["enable"] and v["data"] then
             for j, w in ipairs({strsplit("/", bonusIDs)}) do
@@ -771,10 +783,24 @@ function MoreTooltipInfo.SpellTooltipOverride(option, self, ...)
       if cfg.enableConduitDPS then MoreTooltipInfo.SpellDPSTooltip(self, spellID, option, conduitRank) end
     end
     MoreTooltipInfo.SpellDPSTooltip(self, spellID, "soulbind")
-
+    if cfg.enableTextureID then 
+      local spellTexture = GetSpellTexture(spellID)
+      if spellTexture then MoreTooltipInfo.TooltipLine(self, spellTexture, "TextureID") end
+    end
     if talentID > 0 then
       if cfg.enableSpellTalentID then MoreTooltipInfo.TooltipLine(self, talentID, "TalentID") end
       MoreTooltipInfo.SpellDPSTooltip(self, spellID, option)
+    end
+  end
+end
+
+function MoreTooltipInfo.UnitTooltipOverride(self)
+  if cfg.enableNPCID then
+    local unit = select(2, self:GetUnit())
+    if unit then
+      local guid = UnitGUID(unit) or ""
+      local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
+      if id and guid:match("%a+") ~= "Player" then MoreTooltipInfo.TooltipLine(self, id, "NPC ID") end
     end
   end
 end
@@ -785,6 +811,8 @@ function MoreTooltipInfo.ManageTooltips(tooltipType, option, ...)
     MoreTooltipInfo.SpellTooltipOverride(option, ...)
   elseif tooltipType =="item" then
     MoreTooltipInfo.ItemTooltipOverride(...)
+  elseif tooltipType =="unit" then
+    MoreTooltipInfo.UnitTooltipOverride(...)
   end
 end
 
@@ -1117,9 +1145,9 @@ function OpenProfileUI()
     end)
     UIElements.detailsGroup:AddChild(UIElements.enablecheckbox)
 
-    if UIParameters.availableOption[UIParameters.currentTypeIndex] == "talent" then
+    if UIParameters.availableOption[UIParameters.currentTypeIndex] == "talent" or UIParameters.availableOption[UIParameters.currentTypeIndex] == "conduit" or UIParameters.availableOption[UIParameters.currentTypeIndex] == "soulbind"  then
       UIElements.useOnUIChechbox = AGUI:Create("CheckBox")
-      UIElements.useOnUIChechbox:SetLabel("Show in the talent UI")
+      UIElements.useOnUIChechbox:SetLabel("Show in the " .. UIParameters.availableOption[UIParameters.currentTypeIndex] .. " UI")
       UIElements.useOnUIChechbox:SetRelativeWidth(1)
       UIElements.useOnUIChechbox:SetCallback("OnValueChanged", function(widget)
         if profiles[UIParameters.currentType][UIParameters.currentClassID][UIParameters.currentSpecID][UIParameters.currentProfile]["useOnUI"] then 
@@ -1202,6 +1230,12 @@ function f:CreateOptions()
             name = NORMAL_FONT_COLOR_CODE .. "Enable Spell GCD" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
             order = 2,
+          },
+          enableTextureID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable texture ID" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+            order = 3,
           },
         },
       },
@@ -1312,6 +1346,20 @@ function f:CreateOptions()
             name = NORMAL_FONT_COLOR_CODE .. "Enable Conduit rank" .. FONT_COLOR_CODE_CLOSE,
             width = "full",
             order = 2,
+          },
+        },
+      },
+      gOther = {
+				type = "group",
+				name = "Other",
+				inline = true,
+				order = 5,
+				args = {
+					enableNPCID = {
+            type = "toggle",
+            name = NORMAL_FONT_COLOR_CODE .. "Enable NPCID" .. FONT_COLOR_CODE_CLOSE,
+            width = "full",
+            order = 0,
           },
         },
       },
@@ -1440,6 +1488,8 @@ ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreToolti
 ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", function (...) MoreTooltipInfo.ManageTooltips("item", nil, ...) end)
+
+--NPC
 GameTooltip:HookScript("OnTooltipSetUnit", function(...) MoreTooltipInfo.ManageTooltips("unit", nil, ...) end)
 
 function createFontString(parent,text,textType)
@@ -1538,12 +1588,65 @@ function HideTalentOverlay()
     end
   end
 end
+function DrawConduitDPSOnUI()
+  if (not _G.PlayerTalentFrameSpecialization:IsShown()) then
+    --print("enter")
+
+    if UIParameters.conduitOnUILoaded then
+      local curentTalent
+      --print("show")
+      for i=1, UIParameters.MAX_TALENT_ROW do
+        
+      end
+    else
+      --print("load")
+      local classID = MoreTooltipInfo.GetClassID()
+      local specID = MoreTooltipInfo.GetSpecID()
+      local data = {}
+
+      if profiles["conduit"][classID] == nil then return end
+      if profiles["conduit"][classID][specID] == nil then return end
+      for i, v in pairs(profiles["conduit"][classID][specID]) do
+        if v["enable"] and v["useOnUI"] then
+          data = v["data"]
+        end
+      end
+
+      local p, curentTalent, currentFrame, spellID, dps
+      for i=1, UIParameters.MAX_TALENT_ROW do
+        for j=1, UIParameters.MAX_TALENT_PER_ROW do
+          curentTalent = ""..i..j
+          currentFrame = "PlayerTalentFrameTalentsTalentRow"..i.."Talent"..j
+
+          _, _, _, _, _, spellID = GetTalentInfoByID(_G[currentFrame]:GetID())
+
+          p = _G[currentFrame]
+          UIElements.talentStrings[curentTalent] = {}
+          if data and data[spellID] and data[spellID]["Base"] then
+            dps = MoreTooltipInfo.FormatSpace(data[spellID]["Base"])
+            UIElements.talentStrings[curentTalent]["Base"] = createFontString(p,dps,"talentBase")
+          end
+          if data and data[spellID] and data[spellID]["Best"] then
+            dps = MoreTooltipInfo.FormatSpace(data[spellID]["Best"])
+            UIElements.talentStrings[curentTalent]["Best"] = createFontString(p,dps,"talentBest")
+          end
+        end
+      end
+
+      UIParameters.talentOnUILoaded = true
+    end
+  end
+end
+function HideConduitOverlay()
+  local curentConduit
+
+end
 
 ---------------------
 --Events management -
 ---------------------
 function f:ADDON_LOADED(event, addon)
-  if addon == addonName then
+  if addon == addonName then --load settings
     MoreTooltipInfoVars = MoreTooltipInfo:initDB(MoreTooltipInfoVars, dbDefaults)
     db = MoreTooltipInfoVars
     local playerName = UnitName("player")
@@ -1556,11 +1659,18 @@ function f:ADDON_LOADED(event, addon)
     self:CreateOptions()
   elseif addon == "Blizzard_TalentUI" then
     --print("Talent loaded")
-    _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnShow", function() if cfg.enableConduitID then DrawTalentDPSOnUI() end end)
-    _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnHide", function() if cfg.enableConduitID then HideTalentOverlay() end end)
+    if cfg.enableTalentDPSOnUI then
+      _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnShow", function() if cfg.enableConduitID then DrawTalentDPSOnUI() end end)
+      _G.PlayerTalentFrameTalents.PvpTalentButton:HookScript("OnHide", function() if cfg.enableConduitID then HideTalentOverlay() end end)
+    end
   elseif addon == "Blizzard_Soulbinds" then
     --print("Soulbind loaded")
-    _G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
+    if cfg.enableConduitDPSOnUI then
+      _G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
+    end
+    if cfg.enableSoulbindDPSOnUI then
+      --_G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
+    end
   end
 end
 
