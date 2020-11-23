@@ -1,4 +1,4 @@
-## Interface: 90001
+## Interface: 90002
 ## Title: MoreTooltipInfo
 ## Notes: Adds informations about items and spells in tooltip (RPPM, GCD, simDPS...)
 ## Author: Kutikuti
