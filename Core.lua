@@ -1517,7 +1517,7 @@ function testHook2(tier)
 		local collection = C_Soulbinds.GetConduitCollection(list.conduitType);
 		local matchesSpecSet = {};
     for index, collectionData in ipairs(collection) do
-      print(collectionData.conduitID)
+      --print(collectionData.conduitID)
 		end
 	end
 end
