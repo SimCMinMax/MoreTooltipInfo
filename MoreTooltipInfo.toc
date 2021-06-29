@@ -1,11 +1,11 @@
-## Interface: 90002
+## Interface: 90100
 ## Title: MoreTooltipInfo
 ## Notes: Adds informations about items and spells in tooltip (RPPM, GCD, simDPS...)
 ## Author: Kutikuti
 ## Dependencies: HeroDBC
 ## SavedVariables: MoreTooltipInfoVars
 
-## Version: 2.0.3
+## Version: 2.0.4
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 libs\AceGUI-3.0\AceGUI-3.0.xml
