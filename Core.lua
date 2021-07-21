@@ -1666,7 +1666,7 @@ function f:ADDON_LOADED(event, addon)
   elseif addon == "Blizzard_Soulbinds" then
     --print("Soulbind loaded")
     if cfg.enableConduitDPSOnUI then
-      _G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
+      --_G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
     end
     if cfg.enableSoulbindDPSOnUI then
       --_G.SoulbindViewer.ConduitList.ScrollBox:HookScript("OnShow", function() testHook2("1") end)
@@ -1741,7 +1741,7 @@ MoreTooltipInfo.SpecNames = {
     [260] = 'Outlaw',
     [261] = 'Subtlety',
   },
-  [12] = {
+  [7] = {
     ["name"] = "Shaman",
     ["color"] = "0070de",
     [262] = 'Elemental',
